@@ -4,10 +4,17 @@
 #include "preprocessing.h"
 
 int main() {
-  CNFTester tester(5,5);
+
+  CDNF_formula input = {{-1,-2,3,-4},{-1, -2, -3},{-1, 3, -4},{-1, -2, 4}};
+  auto red = reduced1_vivify(input);
+
+  CNFTester tester(50,50);
+
+  std::cout << "End result: \t";
+  tester.printCNF(red);
 
 
-  for(int i = 0; i < 5; i++) {
+  for(int i = 0; i < 500; i++) {
     auto cnf = reduced1_vivify(tester.generateCNF());
     //auto newcnf = unit_propagation(cnf);
 
