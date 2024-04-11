@@ -12,12 +12,9 @@ CDNF_formula unit_propagation(CDNF_formula cnf);
 
 CDNF_formula vivify(CDNF_formula cnf);
 
-CDNF_formula vivify2(CDNF_formula cnf);
+CDNF_formula vivify_with_pure_lit(CDNF_formula cnf);
 
-CDNF_formula reduced1_vivify(CDNF_formula cnf);
+CDNF_formula vivify_with_pure_lit2(CDNF_formula cnf);
 
-CDNF_formula reduced2_vivify(CDNF_formula cnf);
-
-CDNF_formula UP_reduce(CDNF_formula cnf);
 
 #endif //VIVIFCATION__PREPROCESSING_H_

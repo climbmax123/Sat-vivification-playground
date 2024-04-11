@@ -6,8 +6,8 @@
 
 #include <set>
 #include <vector>
-#include <algorithm>
 #include <iostream>
+#include <unordered_map>
 
 void printCNF(const CDNF_formula &cnf) {
     for (const auto &clause: cnf) {
@@ -78,80 +78,6 @@ int select_a_literal(const std::vector<int> &c, const std::vector<int> &cb) {
     return 0;
 }
 
-
-CDNF_formula reduced1_vivify(CDNF_formula cnf) {
-    //std::cout << "Startclause: \t";
-    //printCNF(cnf);
-    cnf = unit_propagation(cnf);
-    //std::cout << "UP:  \t\t\t";
-    //printCNF(cnf);
-
-    bool change = true;
-    CDNF_formula new_cnf;
-
-    while (change) {
-        change = false;
-        int size = cnf.size();
-
-        for (int i = 0; i < size; i++) {
-            std::vector<int> c = cnf[i];
-            std::cout << "Took clause: \t";
-            printCNF({c});
-
-            cnf.erase(cnf.begin() + i);
-
-            CDNF_formula cnf_backup = cnf;
-
-            std::vector<int> cb; // the reduced clause to write back
-
-            bool shortened = false;
-
-            while (!shortened && c != cb) {
-
-                int l = select_a_literal(c, cb);
-
-                // Pseudocode: c_b ← c_b ∪ {l}; Σ_b ← (Σ_b ∪ {¬l});
-                cb.push_back(l);
-                cnf_backup.push_back({-l});
-
-                std::cout << "lit \t" << l << ": \t";
-                printCNF(cnf_backup);
-
-                cnf_backup = unit_propagation(cnf_backup);
-
-                std::cout << "UP:  \t\t\t";
-                printCNF(cnf_backup);
-
-                if (!cnf_backup.empty() && cnf_backup.front().empty()) {
-                    cnf.insert(cnf.begin() + i, cb);
-                    if( c != cb) {
-                        shortened = true;
-                        change = true;
-                    }
-                    std::cout << "New Clause:  \t";
-                    printCNF(cnf);
-                }
-
-                if (cnf_backup.empty()){
-                    break;
-                }
-            }
-            if (!shortened) {
-                cnf.insert(cnf.begin() + i, c);
-            }
-        }
-    }
-    return cnf;
-}
-
-
-// TODO: TO FIX VIFIVCATION:
-/**
- * Step1: Implement UP so that it does 2 things:
- * First Check if False
- * Secondly give back a list of all found Unit Clauses
-*/
-
 CDNF_formula UP(CDNF_formula cnf, std::vector<std::pair<int,int>> & found_units){
     bool progress = true;
     int step_counter = 0;
@@ -204,24 +130,18 @@ CDNF_formula UP(CDNF_formula cnf, std::vector<std::pair<int,int>> & found_units)
     return cnf;
 }
 
-CDNF_formula vivify(CDNF_formula cnf){
-    // apply the first unit propagation
-    cnf = unit_propagation(cnf);
 
+
+CDNF_formula vivify(CDNF_formula cnf){
     bool change = true;
 
-    // Pseudocode: while change do
     while (change) {
-        // Pseudocode: change ← false;
         change = false;
-
-        // Pseudocode: foreach c ∈ Σ do
+        cnf = unit_propagation(cnf);
         for (int i = 0; i < cnf.size(); i++){
-
             std::vector<int> c = cnf[i];
             cnf.erase(cnf.begin() + i);
             CDNF_formula cnf_backup = cnf;
-
             std::vector<int> cb;
             bool shortened = false;
 
@@ -229,24 +149,19 @@ CDNF_formula vivify(CDNF_formula cnf){
                 int l = select_a_literal(c, cb);
                 cb.push_back(l);
                 cnf_backup.push_back({-l});
-
                 std::vector<std::pair<int,int>> found_unit_clauses;
-                cnf_backup = UP(cnf, found_unit_clauses);
-
-                if (cnf_backup.empty()){
-                    break; // found a sat solution
+                cnf_backup = UP(cnf_backup, found_unit_clauses);
+                if (cnf_backup.empty()) {
+                    return {}; // found a sat solution
                 }
-
-                // case 1 : UP() is False
                 if (!cnf_backup.empty() && cnf_backup.front().empty()) {
                     cnf.insert(cnf.begin() + i, cb);
                     if(c != cb) {
                         shortened = true;
                         change = true;
                     }
-                } // case 2  : has found some additional unit clauses
+                }
                 else if (found_unit_clauses.size() > 1) {
-                    // case: posive
                     if (found_unit_clauses[1].second > 0){
                         if(cb.size() + 1 < c.size()){
                             cb.push_back(found_unit_clauses[1].second);
@@ -254,24 +169,30 @@ CDNF_formula vivify(CDNF_formula cnf){
                             shortened = true;
                         }
                     }
-                    // case: negative
                     else {
-                        std::vector<int> new_clause;
-                        for (int l: c) {
-                            if (l != found_unit_clauses[1].second) {
-                                new_clause.push_back(l);
+                        int k = 0;
+                        for(int s = 1;s < found_unit_clauses.size(); s++){
+                            if (std::find(c.begin(),c.end(), -found_unit_clauses[s].second) != c.end()){
+                                k = s;
+                                break;
                             }
                         }
-                        cnf.insert(cnf.begin() + i, new_clause);
-                        shortened = true;
+                        if(k != 0) {
+                            std::vector<int> new_clause;
+                            for (int l: c) {
+                                if (l != -found_unit_clauses[k].second) {
+                                    new_clause.push_back(l);
+                                }
+                            }
+                            cnf.insert(cnf.begin() + i, new_clause);
+                            shortened = true;
+                        }
                     }
                 }
             }
-            // Pseudocode: if Not(shortened) then Σ ← Σ ∪ {c};
             if (!shortened) {
-                cnf.insert(cnf.begin() + i, c); // Add back the unshortened clause
+                cnf.insert(cnf.begin() + i, c);
             } else {
-                // Pseudocode: else change ← true;
                 change = true;
             }
         }
@@ -280,10 +201,114 @@ CDNF_formula vivify(CDNF_formula cnf){
 }
 
 
+CDNF_formula pureLiteralElimination(CDNF_formula formula) {
+    std::unordered_map<int, int> literalCount; // Track the polarity of each literal
 
-/**
- * Step2: Implement the second phase
- * if postive lit add new clause with pos lit
- * if multiple neg lit remove lits that where neg
- *
-*/
+    // Count the polarity of each literal in the formula
+    for (const auto& clause : formula) {
+        for (int literal : clause) {
+            int key = abs(literal); // Use the absolute value as the key
+            if (literalCount.find(key) == literalCount.end()) {
+                // Not yet in the map, add with current polarity
+                literalCount[key] = (literal > 0) ? 1 : -1;
+            } else if ((literal > 0 && literalCount[key] < 0) || (literal < 0 && literalCount[key] > 0)) {
+                // Existing with opposite polarity, set to 0 indicating it's not pure
+                literalCount[key] = 0;
+            }
+        }
+    }
+
+    // Remove clauses containing pure literals
+    CDNF_formula newFormula;
+    for (const auto& clause : formula) {
+        bool clauseContainsPureLiteral = false;
+        for (int literal : clause) {
+            int key = abs(literal);
+            if (literalCount[key] != 0 && ((literal > 0 && literalCount[key] > 0) || (literal < 0 && literalCount[key] < 0))) {
+                // This clause contains a pure literal, so it can be removed
+                clauseContainsPureLiteral = true;
+                break;
+            }
+        }
+        if (!clauseContainsPureLiteral) {
+            // Only add clauses that do not contain any pure literals
+            newFormula.push_back(clause);
+        }
+    }
+
+    return newFormula;
+}
+
+
+CDNF_formula vivify_with_pure_lit(CDNF_formula cnf){
+    bool change = true;
+    while (change) {
+        change = false;
+        cnf = unit_propagation(cnf);
+        cnf = pureLiteralElimination(cnf);
+        for (int i = 0; i < cnf.size(); i++){
+            std::vector<int> c = cnf[i];
+            cnf.erase(cnf.begin() + i);
+            CDNF_formula cnf_backup = cnf;
+            std::vector<int> cb;
+            bool shortened = false;
+
+            while (!shortened && c != cb) {
+                int l = select_a_literal(c, cb);
+                cb.push_back(l);
+                cnf_backup.push_back({-l});
+                std::vector<std::pair<int,int>> found_unit_clauses;
+                cnf_backup = UP(cnf_backup, found_unit_clauses);
+                if (cnf_backup.empty()) {
+                    return {};
+                }
+                if (!cnf_backup.empty() && cnf_backup.front().empty()) {
+                    cnf.insert(cnf.begin() + i, cb);
+                    if(c != cb) {
+                        shortened = true;
+                        change = true;
+                    }
+                }
+                else if (found_unit_clauses.size() > 1) {
+                    if (found_unit_clauses[1].second > 0){
+                        if(cb.size() + 1 < c.size()){
+                            cb.push_back(found_unit_clauses[1].second);
+                            cnf.insert(cnf.begin() + i, cb);
+                            shortened = true;
+                        }
+                    }
+                    else {
+                        int k = 0;
+                        for(int s = 1;s < found_unit_clauses.size(); s++){
+                            if (std::find(c.begin(),c.end(), -found_unit_clauses[s].second) != c.end()){
+                                k = s;
+                                break;
+                            }
+                        }
+                        if(k != 0) {
+                            std::vector<int> new_clause;
+                            for (int l: c) {
+                                if (l != -found_unit_clauses[k].second) {
+                                    new_clause.push_back(l);
+                                }
+                            }
+                            cnf.insert(cnf.begin() + i, new_clause);
+                            shortened = true;
+                        }
+                    }
+                }
+                cnf_backup = pureLiteralElimination(cnf_backup);
+                if (cnf_backup.empty()) {
+                    return {};
+                }
+            }
+            if (!shortened) {
+                cnf.insert(cnf.begin() + i, c);
+            } else {
+                change = true;
+            }
+        }
+    }
+    return cnf;
+}
+
