@@ -8,13 +8,15 @@
 #include "types.h"
 
 
+CDNF_formula UP(CDNF_formula cnf, std::vector<std::pair<int,int>> & found_units);
+
+CDNF_formula pureLiteralElimination(CDNF_formula formula);
+
 CDNF_formula unit_propagation(CDNF_formula cnf);
 
 CDNF_formula vivify(CDNF_formula cnf);
 
 CDNF_formula vivify_with_pure_lit(CDNF_formula cnf);
-
-CDNF_formula vivify_with_pure_lit2(CDNF_formula cnf);
 
 
 #endif //VIVIFCATION__PREPROCESSING_H_

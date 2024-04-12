@@ -2,6 +2,7 @@
 #include "CnfTester.h"
 #include "Preprocessor.h"
 #include "preprocessing.h"
+#include "fastpreprocessing.h"
 #include <chrono>
 
 
@@ -39,23 +40,26 @@ int main() {
 */
 
 int main() {
-    CNFTester tester(500, 500);
+    CNFTester tester(2000, 2000);
     long long vivifyTime = 0;
     long long vivifyWithPureLitTime = 0;
 
     for(int i = 0; i < 100; i++) {
         std::cout << i <<std::endl;
         auto cnf = tester.generateCNF();
+        auto cnf2 = cnf;
 
         auto start = std::chrono::high_resolution_clock::now();
         auto vivifiedCNF = vivify(cnf);
         auto end = std::chrono::high_resolution_clock::now();
         vivifyTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        //tester.testCNF(vivifiedCNF);
 
         start = std::chrono::high_resolution_clock::now();
-        auto vivifiedWithPureLitCNF = vivify_with_pure_lit(cnf);
+        FastVivify(cnf2);
         end = std::chrono::high_resolution_clock::now();
         vivifyWithPureLitTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+        //tester.testCNF(cnf2);
     }
 
     double avgVivifyTime = vivifyTime / 10000.0;
