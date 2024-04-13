@@ -1,13 +1,9 @@
 # ninja log v5
 2	601	1712904777756996435	CMakeFiles/Vivifcation.dir/fastpreprocessing.cpp.o	b39289fa38827ec1
-3	659	1712903611393076770	CMakeFiles/Vivifcation.dir/preprocessing.cpp.o	25c8a1042b02410e
-3	798	1710766276511760885	CMakeFiles/Vivifcation.dir/Preprocessor.cpp.o	b0dd3798922d0875
-2	613	1710766276327194066	CMakeFiles/Vivifcation.dir/CnfTester.cpp.o	b3add079c34a48a9
 3	687	1712903234960072661	CMakeFiles/Vivifcation.dir/QBFTester.cpp.o	30ff812f9431029a
-655	699	1712904826165285851	Vivifcation	996e28645cdb431f
-2	655	1712904826120318115	CMakeFiles/Vivifcation.dir/main.cpp.o	abe8fb7f7b007315
-0	60	1712904919714870882	build.ninja	99976102f56c2387
-2	622	1712905027229474969	CMakeFiles/Vivifcation.dir/main.cpp.o	abe8fb7f7b007315
-622	666	1712905027274485746	Vivifcation	996e28645cdb431f
-3	625	1712905078863152194	CMakeFiles/Vivifcation.dir/main.cpp.o	abe8fb7f7b007315
 625	668	1712905078907496215	Vivifcation	996e28645cdb431f
+3	798	1710766276511760885	CMakeFiles/Vivifcation.dir/Preprocessor.cpp.o	b0dd3798922d0875
+0	60	1712993796868055315	build.ninja	99976102f56c2387
+2	613	1710766276327194066	CMakeFiles/Vivifcation.dir/CnfTester.cpp.o	b3add079c34a48a9
+3	659	1712903611393076770	CMakeFiles/Vivifcation.dir/preprocessing.cpp.o	25c8a1042b02410e
+3	625	1712905078863152194	CMakeFiles/Vivifcation.dir/main.cpp.o	abe8fb7f7b007315

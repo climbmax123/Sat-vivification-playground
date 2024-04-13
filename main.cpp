@@ -3,6 +3,7 @@
 #include "Preprocessor.h"
 #include "preprocessing.h"
 #include "fastpreprocessing.h"
+#include "watchedpreprocessing.h"
 #include <chrono>
 
 
@@ -40,23 +41,25 @@ int main() {
 */
 
 int main() {
-    CNFTester tester(2000, 2000);
+    CNFTester tester(1000, 1000);
     long long vivifyTime = 0;
     long long vivifyWithPureLitTime = 0;
 
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < 10; i++) {
         std::cout << i <<std::endl;
         auto cnf = tester.generateCNF();
         auto cnf2 = cnf;
 
         auto start = std::chrono::high_resolution_clock::now();
-        auto vivifiedCNF = vivify(cnf);
+        //watched::vivify_with_pure_lit(cnf);
+        tester.testCNF(cnf);
         auto end = std::chrono::high_resolution_clock::now();
         vivifyTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        //tester.testCNF(vivifiedCNF);
+        tester.testCNF(cnf);
 
         start = std::chrono::high_resolution_clock::now();
-        FastVivify(cnf2);
+        watched::vivify_with_pure_lit(cnf2);
+        tester.testCNF(cnf2);
         end = std::chrono::high_resolution_clock::now();
         vivifyWithPureLitTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         //tester.testCNF(cnf2);
@@ -66,7 +69,7 @@ int main() {
     double avgVivifyWithPureLitTime = vivifyWithPureLitTime / 10000.0;
 
     std::cout << "Durchschnittliche Laufzeit von vivify: " << avgVivifyTime << " Mikrosekunden" << std::endl;
-    std::cout << "Durchschnittliche Laufzeit von vivify_with_pure_lit: " << avgVivifyWithPureLitTime << " Mikrosekunden" << std::endl;
+    std::cout << "Durchschnittliche Laufzeit von vivify_fast: " << avgVivifyWithPureLitTime << " Mikrosekunden" << std::endl;
     std::cout << "Durchschnittlicher Laufzeitunterschied: " << (avgVivifyWithPureLitTime - avgVivifyTime) << " Mikrosekunden" << std::endl;
 
     return 0;

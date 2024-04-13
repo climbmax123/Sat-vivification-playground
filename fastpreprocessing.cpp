@@ -52,7 +52,7 @@ void FastUnitPropagation(CDNF_formula& cnf) {
 }
 
 
-void FastUP(CDNF_formula& cnf, std::vector<std::pair<int,int> >& found_units){
+void FastUP(CDNF_formula& cnf, std::vector<std::pair<int,int>>& found_units){
     bool progress = true;
     int step_counter = 0;
 
@@ -244,7 +244,7 @@ void FastVivifyWithPureLit(CDNF_formula& cnf){
                 }
                 else if (found_unit_clauses.size() > 1) {
                     if (found_unit_clauses[1].second > 0){
-                        if(cb.size() + 1 < c.size()){
+                        if(cb.size() + 1 < c.size()){// ToDO: check if it has to be contained in c
                             cb.push_back(found_unit_clauses[1].second);
                             cnf.insert(cnf.begin() + i, cb);
                             shortened = true;
