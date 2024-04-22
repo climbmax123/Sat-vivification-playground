@@ -23,7 +23,7 @@ void QBFTester::saveQBFToFile(const std::string &filePath, const CDNF_formula &c
 
     // Write comments and problem line
     file << "c Saved QBF formula in QDIMACS format\n";
-    file << "p cnf " << countVariables(clauses) << " " << clauses.size() << "\n";
+    file << "p cnf " <<     countVariables(clauses) << " " << clauses.size() << "\n";
 
     // Write quantifiers
     std::map<int, char> quantMap; // to store quantifier types
