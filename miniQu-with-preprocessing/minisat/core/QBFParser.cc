@@ -35,7 +35,7 @@ GatePolarity operator+(const GatePolarity& first, const GatePolarity& second) {
 }
 
 QBFParser::QBFParser(): max_alias(0), output_id(""), variable_gate_boundary(1), number_variables{0, 0}, max_id_number(0) {
-  gates.push_back(Gate("")); // Add dummy gate for 1-based indexing.
+    gates.push_back(Gate("")); // Add dummy gate for 1-based indexing.
 }
 
 QBFParser::~QBFParser() {

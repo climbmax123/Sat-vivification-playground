@@ -18,7 +18,7 @@ MINISAT_RELSYM ?= -g
 
 # Sets of compile flags for different build types
 MINISAT_REL    ?= -O3 -D NDEBUG
-MINISAT_DEB    ?= -O0 -D DEBUG
+MINISAT_DEB    ?= -O0 -D DEBUG 
 MINISAT_PRF    ?= -O3 -D NDEBUG
 MINISAT_FPIC   ?= -fpic
 
@@ -59,7 +59,7 @@ SOMAJOR=2
 SOMINOR=1
 SORELEASE?=.0#   Declare empty to leave out from library file name.
 
-MINISAT_CXXFLAGS = -I. -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wall -Wno-parentheses -Wextra -std=c++20
+MINISAT_CXXFLAGS = -I. -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wall -Wno-parentheses -Wextra -std=c++17
 MINISAT_LDFLAGS  = -Wall -lz
 
 ECHO=@echo
@@ -162,7 +162,7 @@ $(BUILD_DIR)/dynamic/lib/$(MINISAT_DLIB).$(SOMAJOR).$(SOMINOR)$(SORELEASE)\
  $(BUILD_DIR)/dynamic/lib/$(MINISAT_DLIB):
 	$(ECHO) Linking Shared Library: $@
 	$(VERB) mkdir -p $(dir $@)
-	$(VERB) $(CXX) $(MINISAT_LDFLAGS) $(LDFLAGS) -o $@ -shared 	-Wl,$(MINISAT_DLIB).$(SOMAJOR) $^
+	$(VERB) $(CXX) $(MINISAT_LDFLAGS) $(LDFLAGS) -o $@ -shared -Wl,$(MINISAT_DLIB).$(SOMAJOR) $^
 	$(VERB) ln -sf $(MINISAT_DLIB).$(SOMAJOR).$(SOMINOR)$(SORELEASE) $(BUILD_DIR)/dynamic/lib/$(MINISAT_DLIB).$(SOMAJOR)
 	$(VERB) ln -sf $(MINISAT_DLIB).$(SOMAJOR) $(BUILD_DIR)/dynamic/lib/$(MINISAT_DLIB)
 
