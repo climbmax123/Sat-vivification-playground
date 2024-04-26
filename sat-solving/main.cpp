@@ -1,6 +1,6 @@
 #include <iostream>
 #include "CnfTester.h"
-#include "Preprocessor.h"
+#include "../Preprocessor.h"
 #include "preprocessing.h"
 #include "fastpreprocessing.h"
 #include "watchedpreprocessing.h"

@@ -5,7 +5,7 @@
 #ifndef VIVIFCATION_QBFTESTER_H
 #define VIVIFCATION_QBFTESTER_H
 
-#include "types.h"
+#include "sat-solving/types.h"
 
 #include <iostream>
 #include <vector>

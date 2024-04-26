@@ -3,7 +3,6 @@
 //
 
 #include "watchedliteralspreprocessing.h"
-#include <algorithm>
 
 namespace watched_literals {
 
@@ -158,7 +157,7 @@ namespace watched_literals {
         std::set<int> propagated_literals;
         std::vector<bool> clauseIsSat;
     };
-
+/*
     void UP(std::unordered_map<int, std::vector<std::pair<int, int>>>& watchers,
             runtime_info &runtime_info,
             CDNF_formula &cnf,

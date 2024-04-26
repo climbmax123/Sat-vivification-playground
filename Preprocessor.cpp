@@ -17,7 +17,7 @@
  * @param clauses A CDNF formula representing clauses in CNF
  * @param terms A CDNF formula representing terms in CNF
 */
-Preprocessor::Preprocessor(const CDNF_formula& clauses, const CDNF_formula& terms) :
+    Preprocessor::Preprocessor(const CDNF_formula& clauses, const CDNF_formula& terms) :
     qhead(0),
     maxvar(0),
     empty_seen(false),

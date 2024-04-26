@@ -5,7 +5,7 @@
 #ifndef _PREPROCESSOR_H_
 #define _PREPROCESSOR_H_
 
-#include "types.h"
+#include "sat-solving/types.h"
 
 #include <set>
 #include <unordered_map>
