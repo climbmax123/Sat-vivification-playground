@@ -6,9 +6,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
-file(GLOB_RECURSE CADICAL_FILES cadical/*.cpp cadical/*.hpp)
-
-
 add_executable(Vivifcation sat-solving/main.cpp
         sat-solving/CnfTester.cpp
         sat-solving/CnfTester.h
@@ -24,3 +21,11 @@ add_executable(Vivifcation sat-solving/main.cpp
 )
 
 add_executable(qbfuzz test-qbfuzz.cpp)
+
+add_executable(preprocess qbf-preprocessing/main.cpp
+        qbf-preprocessing/input-parser.cpp
+        qbf-preprocessing/input-parser.h
+        qbf-preprocessing/vivify.cpp
+        qbf-preprocessing/vivify.h
+        qbf-preprocessing/types.h)
+
