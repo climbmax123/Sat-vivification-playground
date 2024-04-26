@@ -22,6 +22,8 @@ add_executable(Vivifcation main.cpp
         fastpreprocessing.h
         watchedpreprocessing.h
         watchedpreprocessing.cpp
+        watchedliteralspreprocessing.cpp
+        watchedliteralspreprocessing.h
 )
 
 add_executable(qbfuzz test-qbfuzz.cpp)

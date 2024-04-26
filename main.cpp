@@ -4,6 +4,7 @@
 #include "preprocessing.h"
 #include "fastpreprocessing.h"
 #include "watchedpreprocessing.h"
+#include "watchedliteralspreprocessing.h"
 #include <chrono>
 
 
@@ -51,18 +52,18 @@ int main() {
         auto cnf2 = cnf;
 
         auto start = std::chrono::high_resolution_clock::now();
-        //watched::vivify_with_pure_lit(cnf);
+        watched::unit_propagation(cnf);
         tester.testCNF(cnf);
         auto end = std::chrono::high_resolution_clock::now();
         vivifyTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
         tester.testCNF(cnf);
 
         start = std::chrono::high_resolution_clock::now();
-        watched::vivify_with_pure_lit(cnf2);
+        watched_literals::watched_literals_unit_propagation(cnf2);
         tester.testCNF(cnf2);
         end = std::chrono::high_resolution_clock::now();
         vivifyWithPureLitTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-        //tester.testCNF(cnf2);
+        tester.testCNF(cnf2);
     }
 
     double avgVivifyTime = vivifyTime / 10000.0;
