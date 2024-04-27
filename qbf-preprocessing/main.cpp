@@ -6,12 +6,14 @@
 
 
 int main(int argc, char* argv[]) {
-    if (argc > 1) {
+    if (argc > 2) {
         // Parse from file
         QBF qbf = parseQDIMACSFromFile(argv[1]);
         // Process the parsed QBF...
         printQBF(qbf);
-        writeQDIMACS(qbf, "../output.qdimacs");
+        writeQDIMACS(qbf, argv[2]);
+
+        return 0;
     }
-    return 0;
+    return 1;
 }

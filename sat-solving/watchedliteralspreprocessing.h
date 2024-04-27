@@ -17,7 +17,7 @@ namespace watched_literals {
 
     void watched_literals_unit_propagation(CDNF_formula &cnf);
 
-   // void vivify(CDNF_formula &cnf);
+    void vivify(CDNF_formula &cnf);
 
     //void vivify_with_pure_lit(CDNF_formula &cnf);
 
