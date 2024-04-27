@@ -92,9 +92,9 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
     // Write quantifiers
     for (const auto& [qt, var] : qbf.quantifiers) {
         if (qt == EXISTS) {
-            outfile << "e " << var << std::endl;
+            outfile << "e " << var  << " 0"<< std::endl;
         } else if (qt == FORALL) {
-            outfile << "a " << var << std::endl;
+            outfile << "a " << var << " 0" << std::endl;
         } else {
             // Handle undefined quantifier (optional: warn or throw exception)
             std::cerr << "Warning: Unknown quantifier type in QBF struct" << std::endl;
