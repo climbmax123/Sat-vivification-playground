@@ -1,6 +1,7 @@
 //
 // Created by christofer on 26.04.24.
 //
+#include <set>
 #include "input-parser.h"
 
 
@@ -80,6 +81,14 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
         return;
     }
 
+    std::set<int> vars;
+    for(auto const cl : qbf.formula){
+        for(auto const lit: cl){
+            vars.insert(std::abs(lit));
+        }
+    }
+    outfile << "p cnf " << vars.size() << " " << qbf.formula.size() << std::endl;
+
     // Write quantifiers
     for (const auto& [qt, var] : qbf.quantifiers) {
         if (qt == EXISTS) {
@@ -93,7 +102,6 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
     }
 
     // Write clauses
-    outfile << "c This formula is converted from a QBF struct" << std::endl;
     for (const auto& clause : qbf.formula) {
         outfile << " ";
         for (const auto& lit : clause) {
