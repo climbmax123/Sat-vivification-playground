@@ -17,4 +17,6 @@ void printQBF(const QBF& qbf);
 
 QBF parseQDIMACSFromFile(const std::string& filename);
 
+void writeQDIMACS(const QBF& qbf, const std::string& filename);
+
 #endif //VIVIFCATION_INPUT_PARSER_H

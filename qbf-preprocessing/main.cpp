@@ -11,6 +11,7 @@ int main(int argc, char* argv[]) {
         QBF qbf = parseQDIMACSFromFile(argv[1]);
         // Process the parsed QBF...
         printQBF(qbf);
+        writeQDIMACS(qbf, "../output.qdimacs");
     }
     return 0;
 }

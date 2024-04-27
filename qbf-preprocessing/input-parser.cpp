@@ -3,6 +3,7 @@
 //
 #include "input-parser.h"
 
+
 QBF parse_DIMACS_main(std::istream &in) {
     QBF qbf;
     std::string line;
@@ -70,6 +71,40 @@ QBF parseQDIMACSFromFile(const std::string &filename) {
     }
     return parse_DIMACS_main(file);
 }
+
+
+void writeQDIMACS(const QBF& qbf, const std::string& filename) {
+    std::ofstream outfile(filename);
+    if (!outfile.is_open()) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
+    // Write quantifiers
+    for (const auto& [qt, var] : qbf.quantifiers) {
+        if (qt == EXISTS) {
+            outfile << "e " << var << std::endl;
+        } else if (qt == FORALL) {
+            outfile << "a " << var << std::endl;
+        } else {
+            // Handle undefined quantifier (optional: warn or throw exception)
+            std::cerr << "Warning: Unknown quantifier type in QBF struct" << std::endl;
+        }
+    }
+
+    // Write clauses
+    outfile << "c This formula is converted from a QBF struct" << std::endl;
+    for (const auto& clause : qbf.formula) {
+        outfile << " ";
+        for (const auto& lit : clause) {
+            outfile << lit << " ";
+        }
+        outfile << "0" << std::endl; // Mark the end of the clause
+    }
+
+    outfile.close();
+}
+
 
 
 void printQBF(const QBF &qbf) {
