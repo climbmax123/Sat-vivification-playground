@@ -89,21 +89,33 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
     }
     outfile << "p cnf " << vars.size() << " " << qbf.formula.size() << std::endl;
 
+    std::string prev;
     // Write quantifiers
     for (const auto& [qt, var] : qbf.quantifiers) {
         if (qt == EXISTS) {
-            outfile << "e " << var  << " 0"<< std::endl;
+            if (prev.empty()){
+                outfile << "e";
+            }
+            if(prev == "a"){
+                outfile << " 0"<< std::endl << "e";
+            }
+            outfile << " " << var;
+            prev = "e";
+
         } else if (qt == FORALL) {
-            outfile << "a " << var << " 0" << std::endl;
-        } else {
-            // Handle undefined quantifier (optional: warn or throw exception)
-            std::cerr << "Warning: Unknown quantifier type in QBF struct" << std::endl;
+            if (prev.empty()){
+                outfile << "a" << var;
+            }
+            if(prev == "e"){
+                outfile << " 0"<< std::endl << "a";
+            }
+            outfile << " " << var;
+            prev = "a";
         }
     }
-
+    outfile << " 0"<< std::endl;
     // Write clauses
     for (const auto& clause : qbf.formula) {
-        outfile << " ";
         for (const auto& lit : clause) {
             outfile << lit << " ";
         }

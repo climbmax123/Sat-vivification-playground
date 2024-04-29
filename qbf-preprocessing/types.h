@@ -11,7 +11,6 @@
 enum QuantifierType
 {
     EXISTS = -1,
-    UNDEF = 0,
     FORALL = 1
 };
 
