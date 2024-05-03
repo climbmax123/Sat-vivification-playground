@@ -28,7 +28,8 @@ QBF parse_DIMACS_main(std::istream &in) {
         if (words[0] == "a") {
             int i = 1;
             while (words[i] != "0") {
-                qbf.quantifiers.emplace_back(QuantifierType::FORALL, std::stoi(words[i]));
+                qbf.quantifierOrder.push_back(abs(std::stoi(words[i])));
+                qbf.quantifierType[abs(std::stoi(words[i]))] = QuantifierType::FORALL;
                 i++;
             }
             continue;
@@ -37,7 +38,8 @@ QBF parse_DIMACS_main(std::istream &in) {
         if (words[0] == "e") {
             int i = 1;
             while (words[i] != "0") {
-                qbf.quantifiers.emplace_back(QuantifierType::EXISTS, std::stoi(words[i]));
+                qbf.quantifierOrder.push_back(abs(std::stoi(words[i])));
+                qbf.quantifierType[abs(std::stoi(words[i]))] = QuantifierType::EXISTS;
                 i++;
             }
             continue;
@@ -45,16 +47,29 @@ QBF parse_DIMACS_main(std::istream &in) {
 
         std::vector<int> vc = std::vector<int>(words.size() - 1);
         for (int j = 0; j < words.size() - 1; j++) {
-            vc[j] = std::stoi(words[j]);
+            auto l = std::stoi(words[j]);
+            if (qbf.quantifierType[abs(l)] == FORALL){
+                vc[j] = abs(l);
+            } else {
+                vc[j] = l;
+            }
         }
 
         std::vector<int> sorted_vc;
-        for (const auto &qt: qbf.quantifiers) {
-            if(std::find(vc.begin(), vc.end(), qt.second) != vc.end()){
-                sorted_vc.emplace_back(qt.second);
+        for (const auto &qt: qbf.quantifierOrder) {
+            if(std::find(vc.begin(), vc.end(), qt) != vc.end()){
+                if(qbf.quantifierType[abs(qt)] == FORALL){
+                    sorted_vc.emplace_back(abs(qt));
+                }else{
+                    sorted_vc.emplace_back(qt);
+                }
             }
-            if(std::find(vc.begin(), vc.end(), -qt.second) != vc.end()){
-                sorted_vc.emplace_back(-qt.second);
+            if(std::find(vc.begin(), vc.end(), -qt) != vc.end()){
+                if(qbf.quantifierType[abs(qt)] == FORALL){
+                    sorted_vc.emplace_back(abs(qt));
+                } else {
+                    sorted_vc.emplace_back(-qt);
+                }
             }
         }
 
@@ -74,7 +89,7 @@ QBF parseQDIMACSFromFile(const std::string &filename) {
 }
 
 
-void writeQDIMACS(const QBF& qbf, const std::string& filename) {
+void writeQDIMACS(QBF& qbf, const std::string& filename) {
     std::ofstream outfile(filename);
     if (!outfile.is_open()) {
         std::cerr << "Error opening file: " << filename << std::endl;
@@ -90,26 +105,27 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
     outfile << "p cnf " << vars.size() << " " << qbf.formula.size() << std::endl;
 
     std::string prev;
+
     // Write quantifiers
-    for (const auto& [qt, var] : qbf.quantifiers) {
-        if (qt == EXISTS) {
+    for (int qt : qbf.quantifierOrder) {
+        if (qbf.quantifierType[qt] == EXISTS) {
             if (prev.empty()){
                 outfile << "e";
             }
             if(prev == "a"){
                 outfile << " 0"<< std::endl << "e";
             }
-            outfile << " " << var;
+            outfile << " " << qt;
             prev = "e";
 
-        } else if (qt == FORALL) {
+        } else if (qbf.quantifierType[qt] == FORALL) {
             if (prev.empty()){
-                outfile << "a" << var;
+                outfile << "a" << qt;
             }
             if(prev == "e"){
                 outfile << " 0"<< std::endl << "a";
             }
-            outfile << " " << var;
+            outfile << " " << qt;
             prev = "a";
         }
     }
@@ -127,14 +143,14 @@ void writeQDIMACS(const QBF& qbf, const std::string& filename) {
 
 
 
-void printQBF(const QBF &qbf) {
-    for (const auto &qt: qbf.quantifiers) {
-        if (qt.first == EXISTS) {
+void printQBF(QBF &qbf) {
+    for (const auto &qt: qbf.quantifierOrder) {
+        if (qbf.quantifierType[qt] == EXISTS) {
             std::cout << "E ";
-        } else if (qt.first == FORALL) {
+        } else if (qbf.quantifierType[qt] == FORALL) {
             std::cout << "A ";
         }
-        std::cout << qt.second << " ";
+        std::cout << qt << " ";
     }
     std::cout << std::endl;
 

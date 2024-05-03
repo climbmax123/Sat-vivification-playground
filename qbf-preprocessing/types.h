@@ -10,12 +10,13 @@
 
 enum QuantifierType
 {
-    EXISTS = -1,
-    FORALL = 1
+    EXISTS,
+    FORALL
 };
 
 struct QBF {
-    std::vector<std::pair<QuantifierType, unsigned int>> quantifiers;
+    std::unordered_map<int, QuantifierType> quantifierType; // how the values are is needed for compute
+    std::vector<int> quantifierOrder; // how we order the quantifier not needed while compute
     std::vector<std::vector<int>> formula;
 };
 

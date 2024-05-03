@@ -15,11 +15,10 @@ q=0
 while [ $q -eq 0 ]
 do
     # Generate input.qdimacs file
-    python3 qbfuzz.py -v 2400 -c 2700 -o -r 0.5 --min=40 --max=70 -s 15 -o input.qdimacs
+    python3 qbfuzz.py -v 10 -c 10 -o -r 0.5 -s 7 -o input.qdimacs
 
     # Transform it to output.qcir
     ./cmake-build-release-gcc-compiler/preprocess input.qdimacs output.qdimacs > /dev/null 2>&1
-
     # Run miniQU with preprocessing
     start_time1=$(date +%s)
     ./miniQu-without-preprocessing/build/release/bin/miniQU output.qdimacs > /dev/null 2>&1
