@@ -7,21 +7,6 @@
 
 namespace vivify {
 
-
-    /*
-     enum QuantifierType
-{
-    EXISTS,
-    FORALL
-};
-
-struct QBF {
-    std::unordered_map<int, QuantifierType> quantifierType; // how the values are is needed for compute
-    std::vector<int> quantifierOrder; // how we order the quantifier not needed while compute
-    std::vector<std::vector<int>> formula;
-};
-     */
-
     void watched_literals_unit_propagation(QBF &qbf) {
 
         std::unordered_map<int, QuantifierType> quantifiers;
@@ -490,7 +475,6 @@ struct QBF {
     std::vector<int>
     update_watchers(runtime_info &runtimeInfo, QBF &qbf, std::vector<int> &c, std::vector<int> &cb, int i) {
         std::vector<int> new_c;
-
         // Add the literals
         for (int j: c) {
             if (qbf.quantifierType[abs(j)] == FORALL) {
@@ -502,7 +486,6 @@ struct QBF {
                 new_c.push_back(j);
             }
         }
-
         // Apply universal reduction
         for (int j = new_c.size() - 1; j >= 0; j--) {
             if (qbf.quantifierType[abs(new_c[j])] == FORALL) {
@@ -515,12 +498,11 @@ struct QBF {
         // Delete watchers
         for (int j = 0; j < c.size(); j++) {
             if (runtimeInfo.watchers.contains(c[j])) {
-                auto newEnd = std::remove(runtimeInfo.watchers[c[i]].begin(), runtimeInfo.watchers[c[j]].end(),
+                auto newEnd = std::remove(runtimeInfo.watchers[c[j]].begin(), runtimeInfo.watchers[c[j]].end(),
                                           std::pair<int, int>{i, j});
-                runtimeInfo.watchers[c[i]].erase(newEnd, runtimeInfo.watchers[c[j]].end());
+                runtimeInfo.watchers[c[j]].erase(newEnd, runtimeInfo.watchers[c[j]].end());
             }
         }
-
         // Create new Watchers for the clause
         auto t = new_c.size() - 1;
         while (t > 0) {
@@ -531,7 +513,7 @@ struct QBF {
             }
             t--;
         }
-        return new_c;
+        return std::move(new_c);
     }
 
 
@@ -572,8 +554,6 @@ struct QBF {
         bool change = true;
 
         while (change) {
-            std::cout << "Adapted" << std::endl;
-            printQBF(qbf);
             change = false;
             watched_literals_unit_propagation(qbf);
             // If qbf is sat or unsat after unit propagation
@@ -596,7 +576,7 @@ struct QBF {
 
                 bool shortened = false;
 
-                while (!shortened && is_equal_on_exists(qbf,c,cb)) {
+                while (!shortened && !is_equal_on_exists(qbf,c,cb)) {
                     int l = select_a_literal(qbf, c, cb);
 
                     cb.push_back(l);
@@ -604,18 +584,15 @@ struct QBF {
                     // we work with the unit_tracking. It returns uns everything we need to know.
                     bool is_unsat;
                     size_t num_propagations = qbf_tracking.propagated_literals.size();
-
                     UP(qbf_tracking, qbf, -l, is_unsat);
-
                     if (std::find(qbf_tracking.clauseIsSat.begin(), qbf_tracking.clauseIsSat.end(), false) ==
                         qbf_tracking.clauseIsSat.end()) {
                         qbf.formula = {{}};
                         return;
                     }
-
                     if (is_unsat) {
                         qbf.formula[i] = update_watchers(runtimeInfo, qbf, c, cb, i);
-                        if (c != cb) {
+                        if (!is_equal_on_exists(qbf,c,cb)) {
                             shortened = true;
                             change = true;
                         }
