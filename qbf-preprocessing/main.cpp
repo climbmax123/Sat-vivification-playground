@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
         QBF qbf = parseQDIMACSFromFile(argv[1]);
         // Process the parsed QBF...
         printQBF(qbf);
-        vivify::watched_literals_unit_propagation(qbf);
+        vivify::watched_literals_vivify(qbf);
         printQBF(qbf);
         writeQDIMACS(qbf, argv[2]);
 

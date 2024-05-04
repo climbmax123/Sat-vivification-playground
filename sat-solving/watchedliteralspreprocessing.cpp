@@ -290,6 +290,8 @@ namespace watched_literals {
                 if (mapping.contains(c[i])) {
                     auto newEnd = std::remove(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i});
                     mapping[c[i]].erase(newEnd, mapping[c[i]].end());
+                    // TODO: Set new watcher?
+
                 }
             }
         }

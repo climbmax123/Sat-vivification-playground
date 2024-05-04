@@ -120,7 +120,7 @@ struct QBF {
                             watchers[qbf.formula[watcher.first][lit_pos]].end()) {
 
                             // The other Watcher must be existential if we overstep it. Otw. we have to rest it
-                            if (qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == FORALL) {
+                            if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
                                 // remove the watcher
                                 watchers[qbf.formula[watcher.first][lit_pos]]
                                         .erase(std::find(watchers[qbf.formula[watcher.first][lit_pos]].begin(),
@@ -141,7 +141,7 @@ struct QBF {
                                         continue;
                                     }
                                     // check if literal is existential
-                                    if (qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == FORALL) {
+                                    if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
                                         lit_pos--;
                                         continue;
                                     }
@@ -172,7 +172,7 @@ struct QBF {
 
                         // if already the positive is propagated existential literal. In general this should always be existential
                         if (propagated_literals.contains(qbf.formula[watcher.first][lit_pos])
-                            && qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == EXISTS) {
+                            && qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == EXISTS) {
                             sat_clauses[watcher.first] = true;
                             break;
                         }
@@ -302,7 +302,7 @@ struct QBF {
 
     int select_a_literal(QBF &qbf, const std::vector<int> &c, const std::vector<int> &cb) {
         for (int lit: c) {
-            if (qbf.quantifierType[lit] == EXISTS) {
+            if (qbf.quantifierType[abs(lit)] == EXISTS) {
                 if (std::find(cb.begin(), cb.end(), lit) == cb.end()) {
                     return lit;
                 }
@@ -359,7 +359,7 @@ struct QBF {
                             runtime_info.watchers[qbf.formula[watcher.first][lit_pos]].end()) {
 
                             // The other Watcher must be existential if we overstep it. Otw. we have to rest it
-                            if (qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == FORALL) {
+                            if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
                                 // remove the watcher
                                 runtime_info.watchers[qbf.formula[watcher.first][lit_pos]]
                                         .erase(std::find(
@@ -388,7 +388,7 @@ struct QBF {
                                         continue;
                                     }
                                     // check if literal is existential
-                                    if (qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == FORALL) {
+                                    if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
                                         lit_pos--;
                                         continue;
                                     }
@@ -422,7 +422,7 @@ struct QBF {
                         // if already the positive is propagated existential literal. In general this should always be existential
                         if (std::find(runtime_info.propagated_literals.begin(), runtime_info.propagated_literals.end(),
                                       qbf.formula[watcher.first][lit_pos]) != runtime_info.propagated_literals.end()
-                            && qbf.quantifierType[qbf.formula[watcher.first][lit_pos]] == EXISTS) {
+                            && qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == EXISTS) {
                             runtime_info.clauseIsSat[watcher.first] = true;
                             break;
                         }
@@ -487,28 +487,100 @@ struct QBF {
         }
     }
 
-    std::vector<int> update_watchers(runtime_info &runtimeInfo, std::vector<int> &c, std::vector<int> &cb, int i) {
-        // TODO: update the runtime info and creat the new clause for the next step.
-        return cb;
+    std::vector<int>
+    update_watchers(runtime_info &runtimeInfo, QBF &qbf, std::vector<int> &c, std::vector<int> &cb, int i) {
+        std::vector<int> new_c;
+
+        // Add the literals
+        for (int j: c) {
+            if (qbf.quantifierType[abs(j)] == FORALL) {
+                new_c.push_back(j);
+                continue;
+            }
+
+            if (std::find(cb.begin(), cb.end(), j) != cb.end()) {
+                new_c.push_back(j);
+            }
+        }
+
+        // Apply universal reduction
+        for (int j = new_c.size() - 1; j >= 0; j--) {
+            if (qbf.quantifierType[abs(new_c[j])] == FORALL) {
+                new_c.pop_back();
+            } else {
+                break;
+            }
+        }
+
+        // Delete watchers
+        for (int j = 0; j < c.size(); j++) {
+            if (runtimeInfo.watchers.contains(c[j])) {
+                auto newEnd = std::remove(runtimeInfo.watchers[c[i]].begin(), runtimeInfo.watchers[c[j]].end(),
+                                          std::pair<int, int>{i, j});
+                runtimeInfo.watchers[c[i]].erase(newEnd, runtimeInfo.watchers[c[j]].end());
+            }
+        }
+
+        // Create new Watchers for the clause
+        auto t = new_c.size() - 1;
+        while (t > 0) {
+            if (qbf.quantifierType[abs(new_c[t])] == EXISTS) {
+                runtimeInfo.watchers[new_c[t]].emplace_back(i, t);
+                runtimeInfo.watchers[new_c[t - 1]].emplace_back(i, t - 1);
+                break;
+            }
+            t--;
+        }
+        return new_c;
     }
 
 
-    void watched_literals_vivify(QBF &qbf) {
-        watched_literals_unit_propagation(qbf);
-        // If qbf is sat or unsat after unit propagation
-        if (qbf.formula.empty() || qbf.formula[0].empty()) {
-            return;
+    void printQBF(QBF &qbf) {
+        for (const auto &qt: qbf.quantifierOrder) {
+            if (qbf.quantifierType[qt] == EXISTS) {
+                std::cout << "E ";
+            } else if (qbf.quantifierType[qt] == FORALL) {
+                std::cout << "A ";
+            }
+            std::cout << qt << " ";
         }
-        // create check for cange
+        std::cout << std::endl;
+
+        for (const auto &clause: qbf.formula) {
+            std::cout << "(";
+            for (const auto &literal: clause) {
+                std::cout << literal << " ";
+            }
+            std::cout << ") ";
+        }
+        std::cout << std::endl;
+    }
+
+    bool is_equal_on_exists(QBF &qbf, std::vector<int> c, std::vector<int> cb){
+        for(int lit : c){
+            if(qbf.quantifierType[abs(lit)] == EXISTS){
+                if (std::find(cb.begin(),cb.end(), lit) == cb.end()){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    void watched_literals_vivify(QBF &qbf) {
+        // create check for change
         bool change = true;
 
-        // we store for faster Unit propagation
-        auto runtimeInfo = create_runtime_info(qbf);
-
-
         while (change) {
+            std::cout << "Adapted" << std::endl;
+            printQBF(qbf);
             change = false;
-
+            watched_literals_unit_propagation(qbf);
+            // If qbf is sat or unsat after unit propagation
+            if (qbf.formula.empty() || qbf.formula[0].empty()) {
+                return;
+            }
+            auto runtimeInfo = create_runtime_info(qbf);
             for (int i = 0; i < qbf.formula.size(); i++) {
                 // we work with a copy of the runtimeInfo. And adapt this after each step
                 runtime_info qbf_tracking = runtimeInfo;
@@ -524,8 +596,7 @@ struct QBF {
 
                 bool shortened = false;
 
-                while (!shortened && c != cb) {
-
+                while (!shortened && is_equal_on_exists(qbf,c,cb)) {
                     int l = select_a_literal(qbf, c, cb);
 
                     cb.push_back(l);
@@ -543,20 +614,19 @@ struct QBF {
                     }
 
                     if (is_unsat) {
-                        qbf.formula[i] = update_watchers(runtimeInfo, c, cb, i);
+                        qbf.formula[i] = update_watchers(runtimeInfo, qbf, c, cb, i);
                         if (c != cb) {
                             shortened = true;
                             change = true;
                         }
                     } else {
-                        // TODO: Rewrite this for QBF-tracking
                         for (size_t lit = num_propagations + 1; lit < qbf_tracking.propagated_literals.size(); lit++) {
                             int unit = qbf_tracking.propagated_literals[lit];
 
                             if (std::find(c.begin(), c.end(), unit) != c.end()) {
                                 if (cb.size() + 1 < c.size()) {
                                     cb.push_back(unit);
-                                    qbf.formula[i] = update_watchers(runtimeInfo, c, cb, i);
+                                    qbf.formula[i] = update_watchers(runtimeInfo, qbf, c, cb, i);
                                     shortened = true;
                                 }
                                 break;
@@ -569,7 +639,7 @@ struct QBF {
                                         new_clause.push_back(lc);
                                     }
                                 }
-                                qbf.formula[i] = update_watchers(runtimeInfo, c, cb, i);
+                                qbf.formula[i] = update_watchers(runtimeInfo, qbf, c, cb, i);
                                 shortened = true;
                                 break;
                             }
@@ -585,4 +655,5 @@ struct QBF {
             }
         }
     }
+
 }
