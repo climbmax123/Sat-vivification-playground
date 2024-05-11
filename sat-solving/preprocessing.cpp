@@ -201,19 +201,12 @@ namespace normal {
 
 
     CDNF_formula pureLiteralElimination(CDNF_formula formula) {
-        std::unordered_map<int, int> literalCount; // Track the polarity of each literal
+        std::set<int> literals; // Track the polarity of each literal
 
         // Count the polarity of each literal in the formula
         for (const auto &clause: formula) {
             for (int literal: clause) {
-                int key = abs(literal); // Use the absolute value as the key
-                if (literalCount.find(key) == literalCount.end()) {
-                    // Not yet in the map, add with current polarity
-                    literalCount[key] = (literal > 0) ? 1 : -1;
-                } else if ((literal > 0 && literalCount[key] < 0) || (literal < 0 && literalCount[key] > 0)) {
-                    // Existing with opposite polarity, set to 0 indicating it's not pure
-                    literalCount[key] = 0;
-                }
+               literals.insert(literal);
             }
         }
 
@@ -222,20 +215,15 @@ namespace normal {
         for (const auto &clause: formula) {
             bool clauseContainsPureLiteral = false;
             for (int literal: clause) {
-                int key = abs(literal);
-                if (literalCount[key] != 0 &&
-                    ((literal > 0 && literalCount[key] > 0) || (literal < 0 && literalCount[key] < 0))) {
-                    // This clause contains a pure literal, so it can be removed
+                if (!literals.contains(-literal)){
                     clauseContainsPureLiteral = true;
                     break;
                 }
             }
             if (!clauseContainsPureLiteral) {
-                // Only add clauses that do not contain any pure literals
                 newFormula.push_back(clause);
             }
         }
-
         return newFormula;
     }
 

@@ -552,14 +552,14 @@ namespace vivify {
     void watched_literals_vivify(QBF &qbf) {
         // create check for change
         bool change = true;
-
+        watched_literals_unit_propagation(qbf);
+        // If qbf is sat or unsat after unit propagation
+        if (qbf.formula.empty() || qbf.formula[0].empty()) {
+            return;
+        }
         while (change) {
             change = false;
-            watched_literals_unit_propagation(qbf);
-            // If qbf is sat or unsat after unit propagation
-            if (qbf.formula.empty() || qbf.formula[0].empty()) {
-                return;
-            }
+
             auto runtimeInfo = create_runtime_info(qbf);
             for (int i = 0; i < qbf.formula.size(); i++) {
                 // we work with a copy of the runtimeInfo. And adapt this after each step
@@ -578,7 +578,7 @@ namespace vivify {
 
                 while (!shortened && !is_equal_on_exists(qbf,c,cb)) {
                     int l = select_a_literal(qbf, c, cb);
-
+                    std::cout << "here" << std::endl;
                     cb.push_back(l);
 
                     // we work with the unit_tracking. It returns uns everything we need to know.
@@ -587,7 +587,8 @@ namespace vivify {
                     UP(qbf_tracking, qbf, -l, is_unsat);
                     if (std::find(qbf_tracking.clauseIsSat.begin(), qbf_tracking.clauseIsSat.end(), false) ==
                         qbf_tracking.clauseIsSat.end()) {
-                        qbf.formula = {{}};
+                        std::cout << "SAT" << std::endl;
+                        qbf.formula = {};
                         return;
                     }
                     if (is_unsat) {

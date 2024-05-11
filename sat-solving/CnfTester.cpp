@@ -42,13 +42,13 @@ CDNF_formula CNFTester::generateCNF() {
   CDNF_formula cnf_formula;
   for (int i = 0; i < num_clauses; ++i) {
     std::vector<int> clause;
-    std::set<int> unique_literals;
-    int num_literals = rand() % num_variables + 1;
+    int num_literals = rand() % num_clauses + 1;
 
-    while (unique_literals.size() < static_cast<size_t>(num_literals)) {
+    std::set<int> unique_literals = {};
+    for(int i = 0; i < num_literals; i++) {
       int variable = (rand() % num_variables + 1) * (rand() % 2 == 0 ? 1 : -1);
-      if (unique_literals.find(variable) == unique_literals.end() && unique_literals.find(-variable) == unique_literals.end()) {
-        unique_literals.insert(variable);
+      if (!unique_literals.contains(abs(variable))) {
+        unique_literals.insert(abs(variable));
         clause.push_back(variable);
       }
     }

@@ -8,7 +8,6 @@
 QBF parse_DIMACS_main(std::istream &in) {
     QBF qbf;
     std::string line;
-
     while (std::getline(in, line)) {
         std::istringstream iss(line);
         std::vector<std::string> words;
@@ -16,6 +15,7 @@ QBF parse_DIMACS_main(std::istream &in) {
         while (std::getline(iss, word, ' ')) {
             words.push_back(word);
         }
+        if(words.empty()) continue;
         if (words[0] == "c") {
             continue;
         }
@@ -24,7 +24,6 @@ QBF parse_DIMACS_main(std::istream &in) {
                       << std::endl;
             continue;
         }
-
         if (words[0] == "a") {
             int i = 1;
             while (words[i] != "0") {
@@ -34,7 +33,6 @@ QBF parse_DIMACS_main(std::istream &in) {
             }
             continue;
         }
-
         if (words[0] == "e") {
             int i = 1;
             while (words[i] != "0") {
@@ -44,7 +42,6 @@ QBF parse_DIMACS_main(std::istream &in) {
             }
             continue;
         }
-
         std::vector<int> vc = std::vector<int>(words.size() - 1);
         for (int j = 0; j < words.size() - 1; j++) {
             auto l = std::stoi(words[j]);
@@ -54,7 +51,6 @@ QBF parse_DIMACS_main(std::istream &in) {
                 vc[j] = l;
             }
         }
-
         std::vector<int> sorted_vc;
         for (const auto &qt: qbf.quantifierOrder) {
             if(std::find(vc.begin(), vc.end(), qt) != vc.end()){
@@ -72,7 +68,6 @@ QBF parse_DIMACS_main(std::istream &in) {
                 }
             }
         }
-
         qbf.formula.push_back(std::move(sorted_vc));
     }
     return qbf;
