@@ -24,8 +24,10 @@ public:
 
     // Function to write a line to the CSV file
     void writeData(int num_clauses, int num_literals, int red_unit_clauses, int red_unit_literals,
-                   int red_pure_clauses, int red_pure_literals, int red_comb_clauses, int red_comb_literals);
-};
+                              int red_pure_clauses, int red_pure_literals, int red_vivify_clauses, int red_vivify_literals,
+                              int red_comb_up_clauses, int red_comb_up_literals,int red_comb_vp_clauses, int red_comb_vp_literals);
+
+    };
 
 
 

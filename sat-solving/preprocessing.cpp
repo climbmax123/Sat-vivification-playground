@@ -201,30 +201,36 @@ namespace normal {
 
 
     CDNF_formula pureLiteralElimination(CDNF_formula formula) {
-        std::set<int> literals; // Track the polarity of each literal
+        bool found_pures = true;
+        while(found_pures) {
+            found_pures = false;
+            std::set<int> literals; // Track the polarity of each literal
 
-        // Count the polarity of each literal in the formula
-        for (const auto &clause: formula) {
-            for (int literal: clause) {
-               literals.insert(literal);
-            }
-        }
-
-        // Remove clauses containing pure literals
-        CDNF_formula newFormula;
-        for (const auto &clause: formula) {
-            bool clauseContainsPureLiteral = false;
-            for (int literal: clause) {
-                if (!literals.contains(-literal)){
-                    clauseContainsPureLiteral = true;
-                    break;
+            // Count the polarity of each literal in the formula
+            for (const auto &clause: formula) {
+                for (int literal: clause) {
+                    literals.insert(literal);
                 }
             }
-            if (!clauseContainsPureLiteral) {
-                newFormula.push_back(clause);
+
+            // Remove clauses containing pure literals
+            CDNF_formula newFormula;
+            for (const auto &clause: formula) {
+                bool clauseContainsPureLiteral = false;
+                for (int literal: clause) {
+                    if (!literals.contains(-literal)) {
+                        clauseContainsPureLiteral = true;
+                        found_pures = true;
+                        break;
+                    }
+                }
+                if (!clauseContainsPureLiteral) {
+                    newFormula.push_back(clause);
+                }
             }
+            formula = newFormula;
         }
-        return newFormula;
+        return formula;
     }
 
 

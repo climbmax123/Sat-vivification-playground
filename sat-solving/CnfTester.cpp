@@ -171,7 +171,7 @@ void CNFTester::saveCNF(const std::string &path) {
 }
 
 
-void CNFTester::loadCNF(const std::string &path) {
+CDNF_formula CNFTester::loadCNF(const std::string &path) {
   original_cnf.clear();
   std::ifstream file(path);
   if (file.is_open()) {
@@ -193,6 +193,7 @@ void CNFTester::loadCNF(const std::string &path) {
   } else {
     std::cerr << "Unable to open file for reading: " << path << std::endl;
   }
+    return original_cnf;
 }
 
 std::string CNFTester::generateUUID(const std::string &input_path) {

@@ -12,7 +12,8 @@ CSVWriter::CSVWriter(const std::string &filename) : filename(filename) {
     }
     // Write the CSV header
     file << "num_clauses,num_literals,red_unit_clauses,red_unit_literals,"
-            "red_pure_clauses,red_pure_literals,red_comb_clauses,red_comb_literals\n";
+            "red_pure_clauses,red_pure_literals,red_vivify_clauses, red_vivify_literals, red_comb_up_clauses, red_comb_up_literals,"
+            "red_comb_vp_clauses, red_comb_vp_literals\n";
 }
 
 CSVWriter::~CSVWriter() {
@@ -22,7 +23,8 @@ CSVWriter::~CSVWriter() {
 }
 
 void CSVWriter::writeData(int num_clauses, int num_literals, int red_unit_clauses, int red_unit_literals,
-                          int red_pure_clauses, int red_pure_literals, int red_comb_clauses, int red_comb_literals) {
+                          int red_pure_clauses, int red_pure_literals, int red_vivify_clauses, int red_vivify_literals,
+                          int red_comb_up_clauses, int red_comb_up_literals,int red_comb_vp_clauses, int red_comb_vp_literals) {
     if (!file.is_open()) {
         std::cerr << "File is not open for writing." << std::endl;
         return;
@@ -30,5 +32,7 @@ void CSVWriter::writeData(int num_clauses, int num_literals, int red_unit_clause
     file << num_clauses << "," << num_literals << ","
          << red_unit_clauses << "," << red_unit_literals << ","
          << red_pure_clauses << "," << red_pure_literals << ","
-         << red_comb_clauses << "," << red_comb_literals << "\n";
+            << red_vivify_clauses << "," << red_vivify_literals << ","
+            << red_comb_up_clauses << "," << red_comb_up_literals << ","
+            << red_comb_vp_clauses << "," << red_comb_vp_literals << "\n";
 }

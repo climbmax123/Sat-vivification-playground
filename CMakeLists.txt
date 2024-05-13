@@ -3,7 +3,11 @@ project(Vivifcation)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+# Find OpenMP package
+find_package(OpenMP REQUIRED)
+
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")
 
 add_executable(Vivifcation sat-solving/main.cpp
@@ -29,4 +33,6 @@ add_executable(preprocess qbf-preprocessing/main.cpp
         qbf-preprocessing/vivify.cpp
         qbf-preprocessing/vivify.h
         qbf-preprocessing/types.h)
+
+target_link_libraries(Vivifcation PRIVATE OpenMP::OpenMP_CXX)
 

@@ -51,7 +51,7 @@ class CNFTester {
 
   void saveCNF(const std::string& path);
 
-  void loadCNF(const std::string& path);
+  CDNF_formula loadCNF(const std::string& path);
 
 };
 
