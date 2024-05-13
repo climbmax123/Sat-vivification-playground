@@ -120,10 +120,10 @@ int main() {
     auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022/");
     std::cout << paths.size() << std::endl;
     int i = 0;
-//#pragma omp parallel for
+#pragma omp parallel for
     for (auto const &path: paths) {
         CDNF_formula cnf;
-//#pragma omp critical
+#pragma omp critical
         {
             cnf = tester.loadCNF(path);
             i++;
@@ -177,7 +177,7 @@ int main() {
         auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
 
-//#pragma omp critical
+#pragma omp critical
         {
             writer.writeData(cnf.size(), numLiterals(cnf),
                              unit_prop.size(), numLiterals(unit_prop), duration1,
