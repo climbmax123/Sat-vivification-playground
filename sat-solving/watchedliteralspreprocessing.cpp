@@ -283,18 +283,24 @@ namespace watched_literals {
                          std::vector<int> &cb,
                          int pos) {
         for (int i = 0; i < c.size(); i++) {
-            // if variable is not in cb but in c then  remove from mapping
-            bool find_pos = std::find(cb.begin(), cb.end(), c[i]) != cb.end();
-            bool find_neg = std::find(cb.begin(), cb.end(), -c[i]) != cb.end();
-            if (!find_neg && !find_pos) {
-                if (mapping.contains(c[i])) {
+            if (mapping.contains(c[i]) &&
+                std::find(mapping[c[i]].begin(),mapping[c[i]].end(),std::pair<int, int>{pos, i}) != mapping[c[i]].end()) {
                     auto newEnd = std::remove(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i});
                     mapping[c[i]].erase(newEnd, mapping[c[i]].end());
-                    // TODO: Set new watcher?
-
                 }
             }
+        if (mapping.contains(cb[cb.size()-1])){
+            mapping[cb[cb.size()-1]].emplace_back(pos, cb.size()-1);
+        } else {
+            mapping[cb[cb.size()-1]] = {{pos, cb.size()-1}};
         }
+
+        if (mapping.contains(cb[cb.size()-2])){
+            mapping[cb[cb.size()-2]].emplace_back(pos, cb.size()-2);
+        } else {
+            mapping[cb[cb.size()-2]] = {{pos, cb.size()-2}};
+        }
+
     }
 
 
@@ -308,8 +314,8 @@ void vivify(CDNF_formula &cnf) {
 
     while (change) {
         change = false;
-
         for (int i = 0; i < cnf.size(); i++) {
+
             // we now work with the tracking info no need to create
             runtime_info cnf_tracking = create_runtime_info(cnf, watchers);
 

@@ -113,64 +113,78 @@ int main() {
     return 0;
 }
  */
-
+using namespace std::chrono;
 int main() {
     CSVWriter writer("runtime_statistics_cnf-val-2022.csv");
-    CNFTester tester(10, 10);
+    CNFTester tester(1000, 1000);
     auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022/");
     std::cout << paths.size() << std::endl;
-
-#pragma omp parallel for
+    int i = 0;
+//#pragma omp parallel for
     for (auto const &path: paths) {
         CDNF_formula cnf;
-#pragma omp critical
+//#pragma omp critical
         {
             cnf = tester.loadCNF(path);
+            i++;
         }
-        std::cout << "Loaded \t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf) << std::endl;
+        std::cout << "Loaded " << i <<"\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf) << std::endl;
         // normal unit prop
-        CDNF_formula unit_prop = normal::unit_propagation(cnf);
-        std::cout <<  "\t unit Prop" <<" clauses:\t " << unit_prop.size() << "\t literals: \t" << numLiterals(unit_prop) << std::endl;
+        auto start1 = high_resolution_clock::now();
+        CDNF_formula unit_prop;
+        watched_literals::watched_literals_unit_propagation(cnf);
 
+
+        auto end1 = high_resolution_clock::now();
         // normal pure literal elimination
+        auto start2 = high_resolution_clock::now();
         CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
-        std::cout <<  "\t Pure lit" <<"  clauses:\t " << pure_literal.size() << "\t literals: \t" << numLiterals(pure_literal) << std::endl;
-
+        auto end2 = high_resolution_clock::now();
         // vivify
         CDNF_formula vivify = cnf;
-        normal::vivify(cnf);
-
-        std::cout <<  "\t Vivify" <<" clauses:\t " << vivify.size() << "\t literals: \t" << numLiterals(vivify) << std::endl;
+        auto start3 = high_resolution_clock::now();
+        watched_literals::vivify(cnf);
+        auto end3 = high_resolution_clock::now();
 
 
         // combination unit propagation pure
+        auto start4 = high_resolution_clock::now();
         CDNF_formula comb = normal::pureLiteralElimination(cnf);
-        CDNF_formula new_comb = normal::unit_propagation(comb);
+
+        CDNF_formula new_comb = comb;
+        watched_literals::watched_literals_unit_propagation(new_comb);
 
         while (!equals(comb, new_comb) && !cnf.empty() && !cnf[0].empty()) {
             comb = new_comb;
-            new_comb = normal::unit_propagation(normal::pureLiteralElimination(comb));
+            new_comb =normal::pureLiteralElimination(comb);
+            watched_literals::watched_literals_unit_propagation(new_comb);
         }
-        std::cout <<  "\t Comb1" <<" clauses:\t " << comb.size() << "\t literals: \t" << numLiterals(comb) << std::endl;
-
-        // combination vivify with pure lit.
+        auto end4 = high_resolution_clock::now();
+        auto start5 = high_resolution_clock::now();
         CDNF_formula comb1 = normal::pureLiteralElimination(cnf);
         CDNF_formula new_comb1 = normal::unit_propagation(comb);
 
         while (!equals(comb1, new_comb1) && !cnf.empty() && !cnf[0].empty()) {
             comb1 = new_comb1;
             new_comb1 = normal::pureLiteralElimination(comb1);
-            new_comb1 =  normal::vivify(new_comb1);
+            watched_literals::vivify(new_comb1);
         }
-        std::cout <<  "\t Comb2" <<" clauses:\t " << comb1.size() << "\t literals: \t" << numLiterals(comb1) <<  std::endl <<std::endl;
-#pragma omp critical
+        auto end5 = high_resolution_clock::now();
+
+        auto duration1 = duration_cast<milliseconds>(end1 - start1).count();
+        auto duration2 = duration_cast<milliseconds>(end2 - start2).count();
+        auto duration3 = duration_cast<milliseconds>(end3 - start3).count();
+        auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
+        auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
+
+//#pragma omp critical
         {
             writer.writeData(cnf.size(), numLiterals(cnf),
-                             unit_prop.size(), numLiterals(unit_prop),
-                             pure_literal.size(), numLiterals(pure_literal),
-                             vivify.size(), numLiterals(vivify),
-                             new_comb.size(), numLiterals(new_comb),
-                             new_comb1.size(), numLiterals(new_comb1));
+                             unit_prop.size(), numLiterals(unit_prop), duration1,
+                             pure_literal.size(), numLiterals(pure_literal), duration2,
+                             vivify.size(), numLiterals(vivify), duration3,
+                             new_comb.size(), numLiterals(new_comb), duration4,
+                             new_comb1.size(), numLiterals(new_comb1), duration5);
 
         }
     }

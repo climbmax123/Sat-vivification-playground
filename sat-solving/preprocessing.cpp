@@ -132,11 +132,22 @@ namespace normal {
         return cnf;
     }
 
+    int numLiterals(const CDNF_formula &cnf) {
+        std::set<int> literals;
+        for (const auto &clause: cnf) {
+            for (const auto &lit: clause) {
+                literals.insert(std::abs(lit));
+            }
+        }
+        return literals.size();
+    }
+
 
     CDNF_formula vivify(CDNF_formula cnf) {
         bool change = true;
-
+        int in = 0;
         while (change) {
+            in++;
             change = false;
             cnf = unit_propagation(cnf);
             for (int i = 0; i < cnf.size(); i++) {

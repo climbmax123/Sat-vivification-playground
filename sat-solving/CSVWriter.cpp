@@ -11,9 +11,12 @@ CSVWriter::CSVWriter(const std::string &filename) : filename(filename) {
         return;
     }
     // Write the CSV header
-    file << "num_clauses,num_literals,red_unit_clauses,red_unit_literals,"
-            "red_pure_clauses,red_pure_literals,red_vivify_clauses, red_vivify_literals, red_comb_up_clauses, red_comb_up_literals,"
-            "red_comb_vp_clauses, red_comb_vp_literals\n";
+    file << "num_clauses,num_literals,"
+            "red_unit_clauses,red_unit_literals,unit_duration"
+            "red_pure_clauses,red_pure_literals,pure_duration"
+            "red_vivify_clauses,red_vivify_literals,vivify_duration"
+            "red_comb_up_clauses,red_comb_up_literals,up_duration"
+            "red_comb_vp_clauses,red_comb_vp_literals,vp_duration\n";
 }
 
 CSVWriter::~CSVWriter() {
@@ -22,17 +25,20 @@ CSVWriter::~CSVWriter() {
     }
 }
 
-void CSVWriter::writeData(int num_clauses, int num_literals, int red_unit_clauses, int red_unit_literals,
-                          int red_pure_clauses, int red_pure_literals, int red_vivify_clauses, int red_vivify_literals,
-                          int red_comb_up_clauses, int red_comb_up_literals,int red_comb_vp_clauses, int red_comb_vp_literals) {
+void CSVWriter::writeData(int num_clauses, int num_literals,
+                          int red_unit_clauses, int red_unit_literals, long long unit_duration,
+                          int red_pure_clauses, int red_pure_literals, long long pure_duration,
+                          int red_vivify_clauses, int red_vivify_literals, long long vivify_duration,
+                          int red_comb_up_clauses, int red_comb_up_literals, long long up_duration,
+                          int red_comb_vp_clauses, int red_comb_vp_literals, long long vp_duration) {
     if (!file.is_open()) {
         std::cerr << "File is not open for writing." << std::endl;
         return;
     }
     file << num_clauses << "," << num_literals << ","
-         << red_unit_clauses << "," << red_unit_literals << ","
-         << red_pure_clauses << "," << red_pure_literals << ","
-            << red_vivify_clauses << "," << red_vivify_literals << ","
-            << red_comb_up_clauses << "," << red_comb_up_literals << ","
-            << red_comb_vp_clauses << "," << red_comb_vp_literals << "\n";
+         << red_unit_clauses << "," << red_unit_literals << "," << unit_duration << ","
+         << red_pure_clauses << "," << red_pure_literals << "," << pure_duration << ","
+            << red_vivify_clauses << "," << red_vivify_literals << "," << vivify_duration << ","
+            << red_comb_up_clauses << "," << red_comb_up_literals << "," << up_duration << ","
+            << red_comb_vp_clauses << "," << red_comb_vp_literals << "," << vp_duration << "\n";
 }
