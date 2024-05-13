@@ -120,10 +120,13 @@ int main() {
     auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022/");
     std::cout << paths.size() << std::endl;
 
-
+#pragma omp parallel for
     for (auto const &path: paths) {
         CDNF_formula cnf;
-        cnf = tester.loadCNF(path);
+#pragma omp critical
+        {
+            cnf = tester.loadCNF(path);
+        }
         std::cout << "Loaded \t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf) << std::endl;
         // normal unit prop
         CDNF_formula unit_prop = normal::unit_propagation(cnf);
@@ -160,13 +163,16 @@ int main() {
             new_comb1 =  normal::vivify(new_comb1);
         }
         std::cout <<  "\t Comb2" <<" clauses:\t " << comb1.size() << "\t literals: \t" << numLiterals(comb1) <<  std::endl <<std::endl;
+#pragma omp critical
+        {
+            writer.writeData(cnf.size(), numLiterals(cnf),
+                             unit_prop.size(), numLiterals(unit_prop),
+                             pure_literal.size(), numLiterals(pure_literal),
+                             vivify.size(), numLiterals(vivify),
+                             new_comb.size(), numLiterals(new_comb),
+                             new_comb1.size(), numLiterals(new_comb1));
 
-        writer.writeData(cnf.size(), numLiterals(cnf),
-                         unit_prop.size(), numLiterals(unit_prop),
-                         pure_literal.size(),numLiterals(pure_literal),
-                         vivify.size(), numLiterals(vivify),
-                         new_comb.size(), numLiterals(new_comb),
-                         new_comb1.size(), numLiterals(new_comb1));
+        }
     }
     return 0;
 }
