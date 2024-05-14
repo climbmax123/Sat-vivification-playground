@@ -114,8 +114,15 @@ int main() {
 }
  */
 using namespace std::chrono;
+
 int main() {
-    CSVWriter writer("runtime_statistics_cnf-val-2022.csv");
+    CSVWriter writer("runtime_statistics_cnf-val-2022.csv",
+                     "num_clauses,num_literals,red_unit_clauses,red_unit_literals,unit_duration,red_pure_clauses,red_pure_literals,pure_duration,red_vivify_clauses,red_vivify_literals,vivify_duration,red_comb_up_clauses,red_comb_up_literals,up_duration,red_comb_vp_clauses,red_comb_vp_literals,vp_duration");
+    CSVWriter runtime_writer("runtime_vivification_progress-2022.csv", "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
+    CSVWriter pure_lit_writer("runtime_pure_progress-2022.csv", "count,step,interation,found_pures,reduced_clauses_count,duration")
+
+
+
     CNFTester tester(1000, 1000);
     auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022/");
     std::cout << paths.size() << std::endl;
@@ -123,13 +130,16 @@ int main() {
 #pragma omp parallel for
     for (auto const &path: paths) {
         CDNF_formula cnf;
+        int rank;
 #pragma omp critical
         {
-            cnf = tester.loadCNF(path);
-            i++;
+            cnf = tester.generateCNF();
+            rank = i++;
         }
-        std::cout << "Loaded " << i <<"\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf) << std::endl;
+        std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
+                  << std::endl;
         // normal unit prop
+        /*
         auto start1 = high_resolution_clock::now();
         CDNF_formula unit_prop;
         watched_literals::watched_literals_unit_propagation(cnf);
@@ -140,13 +150,14 @@ int main() {
         auto start2 = high_resolution_clock::now();
         CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
         auto end2 = high_resolution_clock::now();
+         */
         // vivify
         CDNF_formula vivify = cnf;
         auto start3 = high_resolution_clock::now();
-        watched_literals::vivify(cnf);
+        watched_literals::vivify(cnf, rank, change_writer);
         auto end3 = high_resolution_clock::now();
 
-
+        /*
         // combination unit propagation pure
         auto start4 = high_resolution_clock::now();
         CDNF_formula comb = normal::pureLiteralElimination(cnf);
@@ -177,7 +188,7 @@ int main() {
         auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
 
-#pragma omp critical
+//#pragma omp critical
         {
             writer.writeData(cnf.size(), numLiterals(cnf),
                              unit_prop.size(), numLiterals(unit_prop), duration1,
@@ -186,7 +197,9 @@ int main() {
                              new_comb.size(), numLiterals(new_comb), duration4,
                              new_comb1.size(), numLiterals(new_comb1), duration5);
 
+
         }
+         */
     }
     return 0;
 }

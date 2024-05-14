@@ -549,7 +549,7 @@ namespace vivify {
         return true;
     }
 
-    void watched_literals_vivify(QBF &qbf) {
+    void watched_literals_vivify(QBF &qbf, int global_count) {
         // create check for change
         bool change = true;
         watched_literals_unit_propagation(qbf);

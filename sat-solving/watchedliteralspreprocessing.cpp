@@ -284,114 +284,140 @@ namespace watched_literals {
                          int pos) {
         for (int i = 0; i < c.size(); i++) {
             if (mapping.contains(c[i]) &&
-                std::find(mapping[c[i]].begin(),mapping[c[i]].end(),std::pair<int, int>{pos, i}) != mapping[c[i]].end()) {
-                    auto newEnd = std::remove(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i});
-                    mapping[c[i]].erase(newEnd, mapping[c[i]].end());
-                }
+                std::find(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i}) !=
+                mapping[c[i]].end()) {
+                auto newEnd = std::remove(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i});
+                mapping[c[i]].erase(newEnd, mapping[c[i]].end());
             }
-        if (mapping.contains(cb[cb.size()-1])){
-            mapping[cb[cb.size()-1]].emplace_back(pos, cb.size()-1);
+        }
+        if (mapping.contains(cb[cb.size() - 1])) {
+            mapping[cb[cb.size() - 1]].emplace_back(pos, cb.size() - 1);
         } else {
-            mapping[cb[cb.size()-1]] = {{pos, cb.size()-1}};
+            mapping[cb[cb.size() - 1]] = {{pos, cb.size() - 1}};
         }
 
-        if (mapping.contains(cb[cb.size()-2])){
-            mapping[cb[cb.size()-2]].emplace_back(pos, cb.size()-2);
+        if (mapping.contains(cb[cb.size() - 2])) {
+            mapping[cb[cb.size() - 2]].emplace_back(pos, cb.size() - 2);
         } else {
-            mapping[cb[cb.size()-2]] = {{pos, cb.size()-2}};
+            mapping[cb[cb.size() - 2]] = {{pos, cb.size() - 2}};
         }
 
     }
 
+    int numLiterals(const CDNF_formula &cnf) {
+        std::set<int> literals;
+        for (const auto &clause: cnf) {
+            for (const auto &lit: clause) {
+                literals.insert(std::abs(lit));
+            }
+        }
+        return literals.size();
+    }
 
-void vivify(CDNF_formula &cnf) {
-    // for the start we want to preprocess the clause to remove all unit clauses.
-    watched_literals_unit_propagation(cnf);
-    bool change = true;
+    int numVars(const CDNF_formula &cnf) {
+        int literals = 0;
+        for (const auto &clause: cnf) {
+            literals += clause.size();
+        }
+        return literals;
+    }
 
-    // we store for faster Unit propagation
-    auto watchers = create_watched_literal_mapping(cnf);
 
-    while (change) {
-        change = false;
-        for (int i = 0; i < cnf.size(); i++) {
+    void vivify(CDNF_formula &cnf, int global_count, CSVChangeWriter &writer) {
+        // for the start we want to preprocess the clause to remove all unit clauses.
+        watched_literals_unit_propagation(cnf);
+        int change = 0;
+        int new_change = cnf.size();
 
-            // we now work with the tracking info no need to create
-            runtime_info cnf_tracking = create_runtime_info(cnf, watchers);
-
-            // we want to ignore the tracking info for now.
-            cnf_tracking.clauseIsSat[i] = true;
-
-            // we take a clause
-            std::vector<int> c = cnf[i];
-
-            // we take a finished clause
-            std::vector<int> cb;
-
-            bool shortened = false;
-
-            while (!shortened && c != cb) {
-
-                int l = select_a_literal(c, cb);
-
-                cb.push_back(l);
-
-                // we work with the unit_tracking. It returns uns everything we need to know.
-                bool is_unsat;
-                size_t num_propagations = cnf_tracking.propagated_literals.size();
-
-                UP(cnf_tracking, cnf, -l, is_unsat);
-
-                if (std::find(cnf_tracking.clauseIsSat.begin(), cnf_tracking.clauseIsSat.end(), false) ==
-                    cnf_tracking.clauseIsSat.end()) {
-                    cnf = CDNF_formula();
-                    return;
+        // we store for faster Unit propagation
+        auto watchers = create_watched_literal_mapping(cnf);
+        int step = 0;
+        while (new_change > 0) {
+            writer.writeData(global_count, step, cnf.size(), (int) (change / 2), numVars(cnf), numLiterals(cnf));
+            new_change = 0;
+            change = 0;
+            step++;
+            for (int i = 0; i < cnf.size(); i++) {
+                if(i % 1000 == 0) {
+                    std::cout << "interation: " << i << " \tclause: " << i << "\t changed: " << change / 2 << std::endl;
                 }
+                // we now work with the tracking info no need to create
+                runtime_info cnf_tracking = create_runtime_info(cnf, watchers);
 
-                if (is_unsat) {
-                    update_watchers(watchers, c, cb, i);
-                    cnf[i] = cb;
-                    if (c != cb) {
-                        shortened = true;
-                        change = true;
+                // we want to ignore the tracking info for now.
+                cnf_tracking.clauseIsSat[i] = true;
+
+                // we take a clause
+                std::vector<int> c = cnf[i];
+
+                // we take a finished clause
+                std::vector<int> cb;
+
+                bool shortened = false;
+
+                while (!shortened && c != cb) {
+
+                    int l = select_a_literal(c, cb);
+
+                    cb.push_back(l);
+
+                    // we work with the unit_tracking. It returns uns everything we need to know.
+                    bool is_unsat;
+                    size_t num_propagations = cnf_tracking.propagated_literals.size();
+
+                    UP(cnf_tracking, cnf, -l, is_unsat);
+
+                    if (std::find(cnf_tracking.clauseIsSat.begin(), cnf_tracking.clauseIsSat.end(), false) ==
+                        cnf_tracking.clauseIsSat.end()) {
+                        cnf = CDNF_formula();
+                        return;
                     }
-                } else {
-                    for (size_t lit = num_propagations + 1; lit < cnf_tracking.propagated_literals.size(); lit++) {
-                        int unit = cnf_tracking.propagated_literals[lit];
 
-                        if (std::find(c.begin(), c.end(), unit) != c.end()) {
-                            if (cb.size() + 1 < c.size()) {
-                                cb.push_back(unit);
+                    if (is_unsat) {
+                        update_watchers(watchers, c, cb, i);
+                        cnf[i] = cb;
+                        if (c != cb) {
+                            shortened = true;
+                            change++;
+                        }
+                    } else {
+                        for (size_t lit = num_propagations + 1; lit < cnf_tracking.propagated_literals.size(); lit++) {
+                            int unit = cnf_tracking.propagated_literals[lit];
+
+                            if (std::find(c.begin(), c.end(), unit) != c.end()) {
+                                if (cb.size() + 1 < c.size()) {
+                                    cb.push_back(unit);
+                                    update_watchers(watchers, c, cb, i);
+                                    cnf[i] = cb;
+                                    shortened = true;
+                                }
+                                break;
+                            }
+
+                            if (std::find(c.begin(), c.end(), -unit) != c.end()) {
+                                std::vector<int> new_clause;
+                                for (int lc: c) {
+                                    if (lc != -unit) {
+                                        new_clause.push_back(lc);
+                                    }
+                                }
                                 update_watchers(watchers, c, cb, i);
                                 cnf[i] = cb;
                                 shortened = true;
+                                break;
                             }
-                            break;
-                        }
-
-                        if (std::find(c.begin(), c.end(), -unit) != c.end()) {
-                            std::vector<int> new_clause;
-                            for (int lc: c) {
-                                if (lc != -unit) {
-                                    new_clause.push_back(lc);
-                                }
-                            }
-                            update_watchers(watchers, c, cb, i);
-                            cnf[i] = cb;
-                            shortened = true;
-                            break;
                         }
                     }
                 }
+                if (!shortened) {
+                    cnf_tracking.clauseIsSat[i] = false;
+                } else {
+                    change++;
+                    cnf_tracking.clauseIsSat[i] = false;
+                }
             }
-            if (!shortened) {
-                cnf_tracking.clauseIsSat[i] = false;
-            } else {
-                change = true;
-                cnf_tracking.clauseIsSat[i] = false;
-            }
+            new_change = change;
         }
     }
-}
 
 } // watched_literals

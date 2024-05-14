@@ -23,7 +23,9 @@ add_executable(Vivifcation sat-solving/main.cpp
         sat-solving/watchedliteralspreprocessing.cpp
         sat-solving/watchedliteralspreprocessing.h
         sat-solving/CSVWriter.cpp
-)
+        sat-solving/CSVChangeWriter.cpp
+        sat-solving/CSVChangeWriter.h)
+
 
 add_executable(qbfuzz test-qbfuzz.cpp)
 
@@ -32,7 +34,8 @@ add_executable(preprocess qbf-preprocessing/main.cpp
         qbf-preprocessing/input-parser.h
         qbf-preprocessing/vivify.cpp
         qbf-preprocessing/vivify.h
-        qbf-preprocessing/types.h)
+        qbf-preprocessing/types.h
+        )
 
 target_link_libraries(Vivifcation PRIVATE OpenMP::OpenMP_CXX)
 
