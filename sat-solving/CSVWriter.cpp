@@ -48,3 +48,15 @@ void CSVWriter::write_vivification_runtime(int count,  int step, int num_clauses
          << num_clauses << "," << changed_clauses << "," << total_num_vars << ","
          << num_literals << ","<< duration << std::endl;
 }
+
+void CSVWriter::write_pure(int count, int step, int interation, int found_pures, int reduced_clauses_count,
+                           long long int duration) {
+
+    if (!file.is_open()) {
+        std::cerr << "File is not open for writing." << std::endl;
+        return;
+    }
+    file << count << "," << step << ","
+         << interation << "," << found_pures << "," << reduced_clauses_count << ","
+         << duration << std::endl;
+}

@@ -34,6 +34,9 @@ public:
     void write_vivification_runtime(int count, int step, int num_clauses, int changed_clauses, int total_num_vars,
                                     int num_literals, long long duration);
 
+
+    void write_pure(int count, int step, int interation, int found_pures, int reduced_clauses_count, long long duration);
+
 };
 
 

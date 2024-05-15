@@ -23,8 +23,7 @@ add_executable(Vivifcation sat-solving/main.cpp
         sat-solving/watchedliteralspreprocessing.cpp
         sat-solving/watchedliteralspreprocessing.h
         sat-solving/CSVWriter.cpp
-        sat-solving/CSVChangeWriter.cpp
-        sat-solving/CSVChangeWriter.h)
+        )
 
 
 add_executable(qbfuzz test-qbfuzz.cpp)

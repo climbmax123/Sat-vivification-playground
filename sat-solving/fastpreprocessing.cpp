@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include <unordered_map>
+#include <algorithm>
 
 namespace fast {
     void UnitPropagation(CDNF_formula &cnf) {

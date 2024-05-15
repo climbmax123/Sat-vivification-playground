@@ -4,6 +4,8 @@
 
 #include "watchedliteralspreprocessing.h"
 
+#include <algorithm>
+
 namespace watched_literals {
 
     void watched_literals_unit_propagation(CDNF_formula &cnf) {
@@ -323,7 +325,7 @@ namespace watched_literals {
     }
 
 
-    void vivify(CDNF_formula &cnf, int global_count, CSVChangeWriter &writer) {
+    void vivify(CDNF_formula &cnf, int global_count, CSVWriter &writer) {
         // for the start we want to preprocess the clause to remove all unit clauses.
         watched_literals_unit_propagation(cnf);
         int change = 0;
@@ -332,14 +334,18 @@ namespace watched_literals {
         // we store for faster Unit propagation
         auto watchers = create_watched_literal_mapping(cnf);
         int step = 0;
+        auto start = high_resolution_clock::now();
+        auto end = high_resolution_clock::now();
         while (new_change > 0) {
-            writer.writeData(global_count, step, cnf.size(), (int) (change / 2), numVars(cnf), numLiterals(cnf));
+
+            writer.write_vivification_runtime(global_count, step, cnf.size(), (int) (change / 2), numVars(cnf), numLiterals(cnf), duration_cast<milliseconds>(end - start).count());
             new_change = 0;
             change = 0;
             step++;
+            start = high_resolution_clock::now();
             for (int i = 0; i < cnf.size(); i++) {
                 if(i % 1000 == 0) {
-                    std::cout << "interation: " << i << " \tclause: " << i << "\t changed: " << change / 2 << std::endl;
+                    std::cout << "interation: " << step << " \tclause: " << i << "\t changed: " << change / 2 << std::endl;
                 }
                 // we now work with the tracking info no need to create
                 runtime_info cnf_tracking = create_runtime_info(cnf, watchers);
@@ -417,7 +423,174 @@ namespace watched_literals {
                 }
             }
             new_change = change;
+            end = high_resolution_clock::now();
         }
     }
 
+
+    std::vector<int> pureLiteralElimination(CDNF_formula formula) {
+        bool found_pures = true;
+        std::vector<int> clauses;
+        while(found_pures) {
+            found_pures = false;
+            std::set<int> literals; // Track the polarity of each literal
+
+            // Count the polarity of each literal in the formula
+            int count = 0;
+            for (const auto &clause: formula) {
+                if(std::find(clauses.begin(),clauses.end(),count) != clauses.end()) continue;
+                count++;
+                for (int literal: clause) {
+                    literals.insert(literal);
+                }
+            }
+
+            // Remove clauses containing pure literals
+
+            int counter = 0;
+            for (const auto &clause: formula) {
+                bool clauseContainsPureLiteral = false;
+                if(std::find(clauses.begin(),clauses.end(),counter) != clauses.end()) continue;
+                for (int literal: clause) {
+                    if (!literals.contains(-literal)) {
+                        clauses.push_back(counter);
+                        found_pures = true;
+                    }
+                }
+                counter++;
+            }
+        }
+        return clauses;
+    }
+
+    void vivify_with_pure_lit(CDNF_formula &cnf, int global_count, CSVWriter &writer, CSVWriter& pure_writer){
+        // for the start we want to preprocess the clause to remove all unit clauses.
+        watched_literals_unit_propagation(cnf);
+
+        int change = 0;
+        int new_change = cnf.size();
+
+        auto start = high_resolution_clock::now();
+        auto end = high_resolution_clock::now();
+        // we store for faster Unit propagation
+        std::unordered_map<int, std::vector<std::pair<int, int>>> watchers;
+        std::vector<int> already_sat = pureLiteralElimination(cnf);
+        int step = 0;
+        int sat_count = 0;
+        while (new_change > 0) {
+            CDNF_formula copy = std::move(cnf);
+            cnf = {};
+            for(int i = 0; i < copy.size(); i++){
+                if(std::find(already_sat.begin(),already_sat.end(), i) != already_sat.end()) continue;
+                cnf.push_back(copy[i]);
+            }
+            watchers = create_watched_literal_mapping(cnf);
+            if(cnf.empty()) {
+                return;
+            }
+
+            already_sat = {};
+            writer.write_vivification_runtime(global_count, step, cnf.size(), (int) (change / 2), numVars(cnf), numLiterals(cnf), duration_cast<milliseconds>(end - start).count());
+            new_change = 0;
+            change = 0;
+            step++;
+            start = high_resolution_clock::now();
+            for (int i = 0; i < cnf.size(); i++) {
+                if(i % 1000 == 0) {
+                    int bevore = already_sat.size();
+                    auto start2 = high_resolution_clock::now();
+                    already_sat = pureLiteralElimination(cnf);
+                    auto end2 = high_resolution_clock::now();
+                    std::cout << "iteration: " << step << " \tclause: " << i << "\t sat_pures " << already_sat.size() << "\t changed: "  << change / 2 << std::endl;
+                    sat_count += already_sat.size()-bevore;
+                    pure_writer.write_pure(global_count, step, i, already_sat.size()-bevore, sat_count,  duration_cast<milliseconds>(end2 - start2).count());
+                }
+
+                if(std::find(already_sat.begin(),already_sat.end(), i) != already_sat.end()) continue;
+
+                // we now work with the tracking info no need to create
+                runtime_info cnf_tracking = create_runtime_info(cnf, watchers);
+
+                // we want to ignore the tracking info for now.
+                cnf_tracking.clauseIsSat[i] = true;
+
+                for(int k: already_sat){
+                    cnf_tracking.clauseIsSat[k] = true;
+                }
+
+                if(std::find(cnf_tracking.clauseIsSat.begin(), cnf_tracking.clauseIsSat.end(), false) == cnf_tracking.clauseIsSat.end()){
+                    cnf = {};
+                    return;
+                }
+
+                // we take a clause
+                std::vector<int> c = cnf[i];
+
+                // we take a finished clause
+                std::vector<int> cb;
+
+                bool shortened = false;
+
+                while (!shortened && c != cb) {
+                    int l = select_a_literal(c, cb);
+
+                    cb.push_back(l);
+
+                    // we work with the unit_tracking. It returns uns everything we need to know.
+                    bool is_unsat;
+                    size_t num_propagations = cnf_tracking.propagated_literals.size();
+                    UP(cnf_tracking, cnf, -l, is_unsat);
+
+                    if (std::find(cnf_tracking.clauseIsSat.begin(), cnf_tracking.clauseIsSat.end(), false) ==
+                        cnf_tracking.clauseIsSat.end()) {
+                        cnf = CDNF_formula();
+                        return;
+                    }
+                    if (is_unsat) {
+                        update_watchers(watchers, c, cb, i);
+                        cnf[i] = cb;
+                        if (c != cb) {
+                            shortened = true;
+                            change++;
+                        }
+                    } else {
+                        for (size_t lit = num_propagations + 1; lit < cnf_tracking.propagated_literals.size(); lit++) {
+                            int unit = cnf_tracking.propagated_literals[lit];
+
+                            if (std::find(c.begin(), c.end(), unit) != c.end()) {
+                                if (cb.size() + 1 < c.size()) {
+                                    cb.push_back(unit);
+                                    update_watchers(watchers, c, cb, i);
+                                    cnf[i] = cb;
+                                    shortened = true;
+                                }
+                                break;
+                            }
+
+                            if (std::find(c.begin(), c.end(), -unit) != c.end()) {
+                                std::vector<int> new_clause;
+                                for (int lc: c) {
+                                    if (lc != -unit) {
+                                        new_clause.push_back(lc);
+                                    }
+                                }
+                                update_watchers(watchers, c, cb, i);
+                                cnf[i] = cb;
+                                shortened = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!shortened) {
+                    cnf_tracking.clauseIsSat[i] = false;
+                } else {
+                    change++;
+                    cnf_tracking.clauseIsSat[i] = false;
+                }
+            }
+            new_change = change;
+            end = high_resolution_clock::now();
+        }
+    }
 } // watched_literals

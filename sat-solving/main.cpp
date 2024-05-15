@@ -118,26 +118,32 @@ using namespace std::chrono;
 int main() {
     CSVWriter writer("runtime_statistics_cnf-val-2022.csv",
                      "num_clauses,num_literals,red_unit_clauses,red_unit_literals,unit_duration,red_pure_clauses,red_pure_literals,pure_duration,red_vivify_clauses,red_vivify_literals,vivify_duration,red_comb_up_clauses,red_comb_up_literals,up_duration,red_comb_vp_clauses,red_comb_vp_literals,vp_duration");
-    CSVWriter runtime_writer("runtime_vivification_progress-2022.csv", "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
-    CSVWriter pure_lit_writer("runtime_pure_progress-2022.csv", "count,step,interation,found_pures,reduced_clauses_count,duration")
+    CSVWriter runtime_writer("runtime_vivification_progress-2022.csv",
+                             "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
+    CSVWriter runtime_writer2("runtime_vivification_progress-with-pure-2022.csv",
+                              "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
+
+    CSVWriter pure_lit_writer("runtime_pure_progress-2022.csv",
+                              "count,step,iteration,found_pures,reduced_clauses_count,duration");
 
 
-
-    CNFTester tester(1000, 1000);
-    auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022/");
+    auto paths = findCnfFiles("/home/christofer/Dokumente/bachelor/cnf-val-2022/");
     std::cout << paths.size() << std::endl;
     int i = 0;
-#pragma omp parallel for
+//#pragma omp parallel for num_threads(16)
     for (auto const &path: paths) {
         CDNF_formula cnf;
         int rank;
-#pragma omp critical
+//#pragma omp critical
         {
-            cnf = tester.generateCNF();
+            CNFTester tester(4000, 4000);
+            cnf = tester.loadCNF(path);
+
             rank = i++;
+
+            std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
+                      << std::endl;
         }
-        std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
-                  << std::endl;
         // normal unit prop
         /*
         auto start1 = high_resolution_clock::now();
@@ -152,10 +158,18 @@ int main() {
         auto end2 = high_resolution_clock::now();
          */
         // vivify
+/*
         CDNF_formula vivify = cnf;
         auto start3 = high_resolution_clock::now();
-        watched_literals::vivify(cnf, rank, change_writer);
+        watched_literals::vivify(vivify, rank, runtime_writer);
         auto end3 = high_resolution_clock::now();
+
+*/
+        CDNF_formula vivify2 = cnf;
+        auto start4 = high_resolution_clock::now();
+        watched_literals::vivify_with_pure_lit(vivify2, rank, runtime_writer2, pure_lit_writer);
+        auto end4 = high_resolution_clock::now();
+
 
         /*
         // combination unit propagation pure

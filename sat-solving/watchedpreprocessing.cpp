@@ -3,7 +3,7 @@
 //
 
 #include "watchedpreprocessing.h"
-
+#include <algorithm>
 
 namespace watched {
 

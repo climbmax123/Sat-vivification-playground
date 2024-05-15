@@ -6,24 +6,25 @@
 #define VIVIFCATION_WATCHEDLITERALSPREPROCESSING_H
 
 #include "types.h"
-#include "CSVChangeWriter.h"
+#include "CSVWriter.h"
 
 
 #include <unordered_map>
 #include <set>
 #include <vector>
 #include <iostream>
+#include <chrono>
 
 
-
+using namespace std::chrono;
 
 namespace watched_literals {
 
     void watched_literals_unit_propagation(CDNF_formula &cnf);
 
-    void vivify(CDNF_formula &cnf, int global_count, CSVChangeWriter &writer);
+    void vivify(CDNF_formula &cnf, int global_count, CSVWriter &writer);
 
-    //void vivify_with_pure_lit(CDNF_formula &cnf);
+    void vivify_with_pure_lit(CDNF_formula &cnf, int global_count, CSVWriter &writer, CSVWriter& pure_writer);
 
 }
 
