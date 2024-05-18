@@ -730,7 +730,7 @@ namespace watched_literals {
         // we store for faster Unit propagation
         std::unordered_map<int, std::vector<std::pair<int, int>>> watchers;
         int step = 0;
-        int iterations = 500;
+        int iterations = 100;
         int sat_count = 0;
 
         while (new_change > 0 || iterations < cnf.size()) {
@@ -745,7 +745,7 @@ namespace watched_literals {
             }
             sat_count += already_sat.size();
             if (!already_sat.empty()){
-                CDNF_formula copy = cnf;
+                CDNF_formula copy = std::move(cnf);
                 cnf = {};
                 int count = 0;
                 for (int i = 0; i < copy.size(); i++) {
@@ -755,16 +755,17 @@ namespace watched_literals {
                         }
                     }
                     if(already_sat[count] == i) continue;
-                    cnf.push_back(copy[i]);
+                    cnf.push_back(std::move(copy[i]));
                 }
             }
             if(cnf.empty()) return;
 
             if(cnf.size() == 1 && cnf[0].empty()) return;
-
+            std::cout << "start sort" << std::endl;
             auto start_sort = high_resolution_clock::now();
             sort_cnf(cnf);
             auto end_sort = high_resolution_clock::now();
+            std::cout << "Time needed to Sort: " << duration_cast<milliseconds>(end_sort - start_sort).count() << std::endl;
             watchers = create_watched_literal_mapping(cnf);
 
             auto end2 = high_resolution_clock::now();

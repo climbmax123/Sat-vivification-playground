@@ -133,25 +133,25 @@ int main() {
     CSVWriter pure_lit_writer3("runtime_sorted_pure_progress-2022.csv",
                                "count,step,iteration,found_pures,reduced_clauses_count,duration");
 
-    CNFTester tester(200000, 20000);
+    CNFTester tester(800000, 10000);
     auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022");
     std::cout << paths.size() << std::endl;
     int i = 0;
 //#pragma omp parallel for num_threads(16)
-    //for (auto const &path: paths) {
+    for (auto const &path: paths) {
 
-    for (int i = 0; i < 1000000; i++) {
+        //for (int i = 0; i < 1000000; i++) {
         CDNF_formula cnf;
         int rank;
 //#pragma omp critical
         {
 
-            cnf = tester.generateCNF();
+            cnf = tester.loadCNF(path);
 
             rank = i++;
 
-            //std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
-            //          << std::endl;
+            std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
+                      << std::endl;
         }
         // normal unit prop
         /*
