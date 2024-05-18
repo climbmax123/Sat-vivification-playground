@@ -59,6 +59,7 @@ std::vector<std::string> findCnfFiles(const std::string &directoryPath) {
     return cnfFiles;
 }
 
+
 /*
 int main() {
     CSVWriter writer("runtime_statistics7.csv");
@@ -124,20 +125,22 @@ int main() {
                               "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
 
     CSVWriter pure_lit_writer2("runtime_pure_progress-2022.csv",
-                              "count,step,iteration,found_pures,reduced_clauses_count,duration");
+                               "count,step,iteration,found_pures,reduced_clauses_count,duration");
 
     CSVWriter runtime_writer3("runtime_vivification_progress-with-sorted-pure-2022.csv",
                               "count,step,num_clauses,schanged_clauses,total_num_vars,num_literals,duration");
 
     CSVWriter pure_lit_writer3("runtime_sorted_pure_progress-2022.csv",
-                              "count,step,iteration,found_pures,reduced_clauses_count,duration");
+                               "count,step,iteration,found_pures,reduced_clauses_count,duration");
 
-    CNFTester tester(20000, 20000);
-    auto paths = findCnfFiles("/home/christofer/Dokumente/bachelor/cnf-val-2022/");
+    CNFTester tester(200000, 20000);
+    auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022");
     std::cout << paths.size() << std::endl;
     int i = 0;
 //#pragma omp parallel for num_threads(16)
-    for (auto const &path: paths) {
+    //for (auto const &path: paths) {
+
+    for (int i = 0; i < 1000000; i++) {
         CDNF_formula cnf;
         int rank;
 //#pragma omp critical
@@ -147,8 +150,8 @@ int main() {
 
             rank = i++;
 
-            std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
-                      << std::endl;
+            //std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
+            //          << std::endl;
         }
         // normal unit prop
         /*
@@ -163,33 +166,51 @@ int main() {
         CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
         auto end2 = high_resolution_clock::now();
          */
-        // vivify
-
+/*        // vivify
         CDNF_formula vivify = cnf;
         auto start3 = high_resolution_clock::now();
-        //watched_literals::vivify(vivify, rank, runtime_writer);
+        watched_literals::vivify(vivify, rank, runtime_writer);
         auto end3 = high_resolution_clock::now();
         auto duration3 = duration_cast<milliseconds>(end3 - start3).count();
-
-
+/*
+        if (!tester.testCNF(vivify)) {
+            tester.printOriginalCNF();
+            tester.printCNF(vivify);
+            std::cerr << "error not sound" << std::endl;
+            exit(1);
+        }
+        /*
         CDNF_formula vivify2 = cnf;
         auto start4 = high_resolution_clock::now();
         //watched_literals::vivify_with_pure_lit(vivify2, rank, runtime_writer2, pure_lit_writer2);
         auto end4 = high_resolution_clock::now();
         auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
+        /*
+        if (!tester.testCNF(vivify2)) {
+            tester.printOriginalCNF();
+            tester.printCNF(vivify2);
+            std::cerr << "error sorted vivify not sound" << std::endl;
+            exit(2);
+        }
+    */
 
         CDNF_formula vivify3 = cnf;
         auto start5 = high_resolution_clock::now();
         watched_literals::vivify_with_sorted_pure_lit(vivify3, rank, runtime_writer3, pure_lit_writer3);
         auto end5 = high_resolution_clock::now();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
-
-
-
+        /*
+        if (!tester.testCNF(vivify3)) {
+            std::cerr << "error not vivify3 sound" << std::endl;
+            tester.printOriginalCNF();
+            tester.printCNF(vivify3);
+            exit(3);
+        }
+        */
         std::cout << "Vivification Times (in milliseconds):" << std::endl;
-        std::cout << "Without pure literals: " << duration3 << " ms" << std::endl;
-        std::cout << "With pure literals: " << duration4 << " ms" << std::endl;
-        std::cout << "With sorted pure literals: " << duration5 << " ms" << std::endl;
+        //std::cout << "Without pure literals: " << duration3 << " ms \t size: " << vivify.size() << std::endl;
+        //std::cout << "With pure literals: " << duration4 << " ms \t size: " << vivify2.size() << std::endl;
+        std::cout << "With sorted pure literals: " << duration5 << " ms \t size: " << vivify3.size() << std::endl;
 
 
         /*
