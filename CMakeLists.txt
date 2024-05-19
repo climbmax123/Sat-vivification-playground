@@ -25,6 +25,14 @@ add_executable(Vivifcation sat-solving/main.cpp
         sat-solving/CSVWriter.cpp
         )
 
+add_executable(FasterCNF FasterCnfProcessing/main.cpp
+        FasterCnfProcessing/CnfReaderWriter.cpp
+        FasterCnfProcessing/CnfReaderWriter.h
+        FasterCnfProcessing/CnfFormula.cpp
+        FasterCnfProcessing/CnfFormula.h
+)
+
+
 
 add_executable(qbfuzz test-qbfuzz.cpp)
 
