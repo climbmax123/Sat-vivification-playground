@@ -9,27 +9,35 @@
 #include <ctime>
 #include <ctime>
 #include <chrono>
+#include <ranges>
+#include <execution>
+#include <immintrin.h>
 
-template <typename T>
+template<typename T>
 T generateRandomValue();
 
 // Spezialisierung der Funktion für int
-template <>
+template<>
 int generateRandomValue<int>() {
     return rand() % 100;
 }
 
-template <>
+template<>
+int8_t generateRandomValue<int8_t>() {
+    return rand() % 100 == 0 ? 1 : 0;
+}
+
+template<>
 short generateRandomValue<short>() {
     return static_cast<short >(rand() % 100);
 }
 
-template <>
+template<>
 bool generateRandomValue<bool>() {
-    return static_cast<bool>(rand() % 2 == 0);
+    return static_cast<bool>(rand() % 5000 == 0);
 }
 
-template <typename T>
+template<typename T>
 std::vector<T> createRandomArray(size_t size) {
     std::vector<T> array(size);
     for (size_t i = 0; i < size; ++i) {
@@ -38,18 +46,18 @@ std::vector<T> createRandomArray(size_t size) {
     return array;
 }
 
-template <typename T>
-std::vector<std::vector<T>> createRadomMatrix(size_t height, size_t width){
+template<typename T>
+std::vector<std::vector<T>> createRadomMatrix(size_t height, size_t width) {
     std::vector<std::vector<T>> array(height);
-    for(size_t i = 0; i < height; ++i){
+    for (size_t i = 0; i < height; ++i) {
         array[i] = createRandomArray<T>(width);
     }
     return array;
 }
 
 
-template <typename T>
-std::vector<T> mat_vec_mul(const std::vector<std::vector<T>>& matrix, const std::vector<T>& vec) {
+template<typename T>
+std::vector<T> mat_vec_mul(const std::vector<std::vector<T>> &matrix, const std::vector<T> &vec) {
     size_t height = matrix.size();
     size_t width = vec.size();
     std::vector<T> result(height, 0);
@@ -63,7 +71,7 @@ std::vector<T> mat_vec_mul(const std::vector<std::vector<T>>& matrix, const std:
     return result;
 }
 
-std::vector<bool> mat_vec_mul_bool(const std::vector<std::vector<bool>>& matrix, const std::vector<bool>& vec) {
+std::vector<bool> mat_vec_mul_bool(const std::vector<std::vector<bool>> &matrix, const std::vector<bool> &vec) {
     size_t height = matrix.size();
     size_t width = vec.size();
     std::vector<bool> result(height, false);
@@ -80,68 +88,255 @@ std::vector<bool> mat_vec_mul_bool(const std::vector<std::vector<bool>>& matrix,
     return result;
 }
 
-template <typename T>
-std::vector<T> mat_vec_mul2(const std::vector<std::vector<T>>& matrix, const std::vector<T>& vec) {
+
+#include <vector>
+#include <immintrin.h> // Für AVX-512-Instruktionen
+
+#include <vector>
+#include <immintrin.h> // Für AVX-512-Instruktionen
+
+std::vector<bool> mat_vec_mul_bool2(const std::vector<std::vector<bool>> &matrix, const std::vector<bool> &vec) {
     size_t height = matrix.size();
     size_t width = vec.size();
-    std::vector<T> result(height, 0);
+    std::vector<bool> result(height, false);
 
+    // Konvertiere den Vektor zu Masken
+    std::vector<__mmask64> vec_masks((width + 63) / 64, 0);
     for (size_t j = 0; j < width; ++j) {
-        T vec_j = vec[j];
-        for (size_t i = 0; i < height; ++i) {
-            result[i] += matrix[i][j] * vec_j;
+        if (vec[j]) {
+            vec_masks[j / 64] |= (1ULL << (j % 64));
+        }
+    }
+
+    for (size_t i = 0; i < height; ++i) {
+        bool found = false;
+        for (size_t block = 0; block < vec_masks.size(); ++block) {
+            __mmask64 mat_mask = 0;
+            size_t start = block * 64;
+            size_t end = std::min(start + 64, width);
+            for (size_t j = start; j < end; ++j) {
+                if (matrix[i][j]) {
+                    mat_mask |= (1ULL << (j % 64));
+                }
+            }
+
+            if (vec_masks[block] & mat_mask) {
+                result[i] = true;
+                found = true;
+                break; // Frühzeitiger Abbruch, da mindestens ein Element wahr ist
+            }
+        }
+        if (!found) {
+            result[i] = false;
         }
     }
 
     return result;
 }
 
-int main(){
-    auto matrix1 = createRadomMatrix<int>(10000,10000);
-    auto vector1 = std::vector<int>(10000, 1);
+#include <vector>
+#include <ranges>
+#include <immintrin.h> // Für AVX2-Instruktionen
 
-    double time1 = 0;
-    for(int i = 0; i < 10; i++){
-        auto start = std::chrono::high_resolution_clock::now();
 
-        // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul(matrix1, vector1);
 
-        // Zeitmessung stoppen
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start;
-        time1 += duration.count();
+std::vector<int> mat_vec_mul_int_2(const std::vector<std::vector<int>> &matrix, const std::vector<int> &vec) {
+    size_t height = matrix.size();
+    size_t width = vec.size();
+    std::vector<int> result(height, 0);
+
+    for (size_t j = 0; j < width; ++j) {
+        __m256i vec_j_avx = _mm256_set1_epi32(vec[j]);
+        size_t i = 0;
+
+        // Verarbeite die Hauptschleife mit AVX2
+        for (; i + 8 <= height; i += 8) {
+            __m256i mat_col_avx = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(&matrix[i][j]));
+            __m256i result_avx = _mm256_loadu_si256(reinterpret_cast<__m256i *>(&result[i]));
+            result_avx = _mm256_add_epi32(result_avx, _mm256_mullo_epi32(mat_col_avx, vec_j_avx));
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(&result[i]), result_avx);
+        }
+
+        // Verarbeite die restlichen Elemente
+        for (; i < height; ++i) {
+            result[i] += matrix[i][j] * vec[j];
+        }
     }
 
-    std::cout << "Laufzeit <int> für 10: " << time1 << " ms" << std::endl;
+    return result;
+}
 
-    auto matrix2 = createRadomMatrix<short>(10000,10000);
-    auto vector2 = std::vector<short>(10000, 1);
+std::vector<std::vector<int>> multiplyMatrices(const std::vector<std::vector<int>>& A, const std::vector<std::vector<int>>& B) {
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_cols = B[0].size();
 
-    double time2 = 0;
-    for(int i = 0; i < 10; i++){
-        auto start = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<int>> result(A_rows, std::vector<int>(B_cols, 0));
 
-        // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul(matrix2, vector2);
-
-        // Zeitmessung stoppen
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start;
-        time2 += duration.count();
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t j = 0; j < B_cols; ++j) {
+            for (size_t k = 0; k < A_cols; ++k) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+        }
     }
 
-    std::cout << "Laufzeit für <short> 10: " << time2 << " ms" << std::endl;
+    return result;
+}
 
-    auto matrix3 = createRadomMatrix<bool>(10000,10000);
-    auto vector3 = std::vector<bool>(10000, 1);
+
+std::vector<std::vector<short>> multiplyMatrices(const std::vector<std::vector<short>>& A, const std::vector<std::vector<short>>& B) {
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_cols = B[0].size();
+
+    std::vector<std::vector<short>> result(A_rows, std::vector<short>(B_cols, 0));
+
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t j = 0; j < B_cols; ++j) {
+            for (size_t k = 0; k < A_cols; ++k) {
+                result[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<int>> multiplyMatricesAVX512(const std::vector<std::vector<int>>& A, const std::vector<std::vector<int>>& B) {
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_cols = B[0].size();
+
+    std::vector<std::vector<int>> result(A_rows, std::vector<int>(B_cols, 0));
+
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t k = 0; k < A_cols; ++k) {
+            __m512i a_val = _mm512_set1_epi32(A[i][k]);
+            for (size_t j = 0; j < B_cols; j += 16) {
+                int remainder = B_cols - j < 16 ? B_cols - j : 16;
+                __m512i b_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&B[k][j]));
+                __m512i res_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&result[i][j]));
+
+                __m512i mul_vals = _mm512_mullo_epi32(a_val, b_vals);
+                res_vals = _mm512_add_epi32(res_vals, mul_vals);
+
+                // Mask to handle the remainder of elements when B_cols is not a multiple of 16
+                __mmask16 mask = (1 << remainder) - 1;
+                _mm512_mask_storeu_epi32(reinterpret_cast<__m512i*>(&result[i][j]), mask, res_vals);
+            }
+        }
+    }
+
+    return result;
+}
+
+#include <vector>
+#include <immintrin.h> // Für AVX2-Instruktionen
+
+std::vector<int> mat_vec_mul_short(const std::vector<std::vector<short>> &matrix, const std::vector<short> &vec) {
+    size_t height = matrix.size();
+    size_t width = vec.size();
+    std::vector<int> result(height, 0);
+
+    for (size_t j = 0; j < width; ++j) {
+        __m256i vec_j_avx = _mm256_set1_epi16(vec[j]);
+        size_t i = 0;
+
+        // Verarbeite die Hauptschleife mit AVX2
+        for (; i + 16 <= height; i += 16) {
+            __m256i mat_col_avx = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(&matrix[i][j]));
+            __m256i result_avx = _mm256_loadu_si256(reinterpret_cast<__m256i *>(&result[i]));
+            __m256i mul_res = _mm256_mullo_epi16(mat_col_avx, vec_j_avx);
+            result_avx = _mm256_add_epi16(result_avx, mul_res);
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(&result[i]), result_avx);
+        }
+
+        // Verarbeite die restlichen Elemente
+        for (; i < height; ++i) {
+            result[i] += matrix[i][j] * vec[j];
+        }
+    }
+
+    return result;
+}
+
+
+
+std::vector<std::vector<int>> multiplyMatricesAVX512_8bit(const std::vector<std::vector<int8_t>>& A, const std::vector<std::vector<int8_t>>& B) {
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_cols = B[0].size();
+
+    std::vector<std::vector<int>> result(A_rows, std::vector<int>(B_cols, 0));
+
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t k = 0; k < A_cols; ++k) {
+            __m512i a_val = _mm512_set1_epi8(A[i][k]);
+            for (size_t j = 0; j < B_cols; j += 64) {
+                int remainder = B_cols - j < 64 ? B_cols - j : 64;
+                __m512i b_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&B[k][j]));
+
+                // Unpack and multiply, then accumulate
+                __m512i res_vals_low = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&result[i][j]));
+                __m512i res_vals_high = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&result[i][j + 32]));
+
+                __m512i a_val_low = _mm512_unpacklo_epi8(a_val, _mm512_setzero_si512());
+                __m512i a_val_high = _mm512_unpackhi_epi8(a_val, _mm512_setzero_si512());
+
+                __m512i b_vals_low = _mm512_unpacklo_epi8(b_vals, _mm512_setzero_si512());
+                __m512i b_vals_high = _mm512_unpackhi_epi8(b_vals, _mm512_setzero_si512());
+
+                __m512i mul_vals_low = _mm512_madd_epi16(a_val_low, b_vals_low);
+                __m512i mul_vals_high = _mm512_madd_epi16(a_val_high, b_vals_high);
+
+                res_vals_low = _mm512_add_epi32(res_vals_low, mul_vals_low);
+                res_vals_high = _mm512_add_epi32(res_vals_high, mul_vals_high);
+
+                // Mask to handle the remainder of elements when B_cols is not a multiple of 64
+                __mmask64 mask = (1ULL << remainder) - 1;
+                _mm512_mask_storeu_epi32(reinterpret_cast<__m512i*>(&result[i][j]), mask, res_vals_low);
+                if (remainder > 32) {
+                    _mm512_mask_storeu_epi32(reinterpret_cast<__m512i*>(&result[i][j + 32]), mask >> 32, res_vals_high);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+
+
+// Specialization for std::vector<bool>
+size_t calculateMatrixMemorySize(const std::vector<std::vector<bool>>& matrix) {
+    size_t rowSize = matrix.size() * sizeof(std::vector<bool>);
+    size_t totalBits = 0;
+    for (const auto& row : matrix) {
+        totalBits += row.size();
+    }
+    size_t totalSize = rowSize + (totalBits + 7) / 8; // Bits to bytes
+    return totalSize;
+}
+
+int main() {
+    auto matrix1 = createRadomMatrix<short>(100, 100);
+    auto matrix2 = createRadomMatrix<short>(100,100);
+
+    auto matrix3 = createRadomMatrix<int8_t>(4000, 4000);
+    auto matrix4 = createRadomMatrix<int8_t>(4000,1);
+
+    auto matrix5 = createRadomMatrix<int>(100, 100);
+    auto matrix6 = createRadomMatrix<int>(100,100   );
+
+    auto vector3 = std::vector<bool>(50000, 1);
 
     double time3 = 0;
-    for(int i = 0; i < 10; i++){
+    for (int i = 0; i < 10; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul_bool(matrix3, vector3);
+        auto mul = multiplyMatrices(matrix5, matrix6);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -149,19 +344,15 @@ int main(){
         time3 += duration.count();
     }
 
-    std::cout << "Laufzeit für <bool> 10: " << time3 << " ms" << std::endl;
+    std::cout << "Laufzeit für normal int (1000,1000)x(1000,1000): " << time3/10 << " ms" << std::endl;
 
-    std::cout << "\nmethode 2\n" << std::endl;
-
-    auto matrix4 = createRadomMatrix<int>(10000,10000);
-    auto vector4 = std::vector<int>(10000, 1);
 
     double time4 = 0;
-    for(int i = 0; i < 10; i++){
+    for (int i = 0; i < 10; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul(matrix4, vector4);
+        auto mul = multiplyMatrices(matrix1, matrix2);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -169,35 +360,14 @@ int main(){
         time4 += duration.count();
     }
 
-    std::cout << "Laufzeit <int> für 10: " << time4 << " ms" << std::endl;
-
-    auto matrix5 = createRadomMatrix<short>(10000,10000);
-    auto vector5 = std::vector<short>(10000, 1);
-
-    double time5 = 0;
-    for(int i = 0; i < 10; i++){
-        auto start = std::chrono::high_resolution_clock::now();
-
-        // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul(matrix5, vector5);
-
-        // Zeitmessung stoppen
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> duration = end - start;
-        time5 += duration.count();
-    }
-
-    std::cout << "Laufzeit für <short> 10: " << time5 << " ms" << std::endl;
-
-    auto matrix6 = createRadomMatrix<bool>(10000,10000);
-    auto vector6 = std::vector<bool>(10000, 1);
+    std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4/10 << " ms" << std::endl;
 
     double time6 = 0;
-    for(int i = 0; i < 10; i++){
+    for (int i = 0; i < 100; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul = mat_vec_mul_bool(matrix6, vector6);
+        auto mul =  multiplyMatricesAVX512(matrix5, matrix6);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -205,9 +375,23 @@ int main(){
         time6 += duration.count();
     }
 
-    std::cout << "Laufzeit für <bool> 10: " << time6 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int (1000,1000)x(1000,1000): " << time6/100 << " ms" << std::endl;
 
 
+    double time7 = 0;
+    for (int i = 0; i < 1; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Matrix-Vektor-Multiplikation
+        auto mul =  multiplyMatricesAVX512_8bit(matrix3, matrix4);
+
+        // Zeitmessung stoppen
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        time7 += duration.count();
+    }
+
+    std::cout << "Laufzeit für avx int (1000,1000)x(1000,1000): " << time7/1 << " ms" << std::endl;
 
 
     return 0;
