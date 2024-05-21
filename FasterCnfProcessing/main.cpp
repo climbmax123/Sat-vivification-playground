@@ -441,7 +441,7 @@ int main() {
     auto vector3 = std::vector<bool>(50000, 1);
 
     double time3 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -453,11 +453,11 @@ int main() {
         time3 += duration.count();
     }
 
-    std::cout << "Laufzeit für normal int (1000,1000)x(1000,1000): " << time3/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für normal int (1000,1000)x(1000,1000): " << time3 << " ms" << std::endl;
 
 
     double time4 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -469,7 +469,7 @@ int main() {
         time4 += duration.count();
     }
 
-    std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4 << " ms" << std::endl;
 
     double time6 = 0;
     for (int i = 0; i < 10; i++) {
