@@ -432,11 +432,11 @@ int main() {
     auto matrix1 = createRadomMatrix<short>(1000, 1000);
     auto matrix2 = createRadomMatrix<short>(1000,1000);
 
-    auto matrix3 = createRadomMatrix<int8_t>(1000, 1000);
-    auto matrix4 = createRadomMatrix<int8_t>(1000,1000);
+    auto matrix3 = createRadomMatrix<int8_t>(10000, 10000);
+    auto matrix4 = createRadomMatrix<int8_t>(10000,10000);
 
-    auto matrix5 = createRadomMatrix<int>(1000, 1000);
-    auto matrix6 = createRadomMatrix<int>(1000,1000);
+    auto matrix5 = createRadomMatrix<int>(10000, 10000);
+    auto matrix6 = createRadomMatrix<int>(10000,10000);
 
     auto vector3 = std::vector<bool>(50000, 1);
 
@@ -469,7 +469,7 @@ int main() {
         time4 += duration.count();
     }
 
-    std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4 << " ms" << std::endl;
+    std::cout << "Laufzeit für normal short (10000,10000)x(10000,10000): " << time4 << " ms" << std::endl;
 
     double time6 = 0;
     for (int i = 0; i < 10; i++) {
@@ -500,7 +500,7 @@ int main() {
         time7 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time7/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time7/10 << " ms" << std::endl;
 
     double time8 = 0;
     for (int i = 0; i < 10; i++) {
@@ -515,7 +515,7 @@ int main() {
         time8 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time8/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time8/10 << " ms" << std::endl;
 
     double time9 = 0;
     for (int i = 0; i < 10; i++) {
@@ -530,7 +530,7 @@ int main() {
         time9 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 128er blocks (1000,1000)x(1000,1000): " << time9/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 128er blocks (10000,10000)x(10000,10000): " << time9/10 << " ms" << std::endl;
 
 
     double time10 = 0;
@@ -546,7 +546,7 @@ int main() {
         time10 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 256er blocks (1000,1000)x(1000,1000): " << time10 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 256er blocks (10000,10000)x(10000,10000): " << time10 /10<< " ms" << std::endl;
 
 
 
@@ -563,7 +563,7 @@ int main() {
         time11 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 512er blocks (1000,1000)x(1000,1000): " << time11 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 512er blocks (10000,10000)x(10000,10000): " << time11 /10<< " ms" << std::endl;
 
 
     double time12 = 0;
@@ -579,7 +579,7 @@ int main() {
         time12 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 1024er blocks (1000,1000)x(1000,1000): " << time11 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 1024er blocks (10000,10000)x(10000,10000): " << time11 /10<< " ms" << std::endl;
 
 
     return 0;
