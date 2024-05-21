@@ -435,8 +435,8 @@ int main() {
     auto matrix3 = createRadomMatrix<int8_t>(10000, 10000);
     auto matrix4 = createRadomMatrix<int8_t>(10000,10000);
 
-    auto matrix5 = createRadomMatrix<int>(10000, 10000);
-    auto matrix6 = createRadomMatrix<int>(10000,10000);
+    auto matrix5 = createRadomMatrix<int>(1000, 1000);
+    auto matrix6 = createRadomMatrix<int>(1000,1000);
 
     auto vector3 = std::vector<bool>(50000, 1);
 
@@ -469,7 +469,7 @@ int main() {
         time4 += duration.count();
     }
 
-    std::cout << "Laufzeit für normal short (10000,10000)x(10000,10000): " << time4 << " ms" << std::endl;
+    std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4 << " ms" << std::endl;
 
     double time6 = 0;
     for (int i = 0; i < 10; i++) {
