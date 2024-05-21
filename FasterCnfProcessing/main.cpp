@@ -472,7 +472,7 @@ int main() {
     std::cout << "Laufzeit für normal short (1000,1000)x(1000,1000): " << time4 << " ms" << std::endl;
 
     double time6 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -484,11 +484,11 @@ int main() {
         time6 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int (1000,1000)x(1000,1000): " << time6/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int (1000,1000)x(1000,1000): " << time6 << " ms" << std::endl;
 
 
     double time7 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -500,10 +500,10 @@ int main() {
         time7 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time7/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time7 << " ms" << std::endl;
 
     double time8 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -515,10 +515,10 @@ int main() {
         time8 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time8/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (10000,10000)x(10000,10000): " << time8 << " ms" << std::endl;
 
     double time9 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -530,11 +530,11 @@ int main() {
         time9 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 128er blocks (10000,10000)x(10000,10000): " << time9/10 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 128er blocks (10000,10000)x(10000,10000): " << time9 << " ms" << std::endl;
 
 
     double time10 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -546,12 +546,12 @@ int main() {
         time10 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 256er blocks (10000,10000)x(10000,10000): " << time10 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 256er blocks (10000,10000)x(10000,10000): " << time10 << " ms" << std::endl;
 
 
 
     double time11 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -563,11 +563,11 @@ int main() {
         time11 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 512er blocks (10000,10000)x(10000,10000): " << time11 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 512er blocks (10000,10000)x(10000,10000): " << time11 << " ms" << std::endl;
 
 
     double time12 = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -579,7 +579,7 @@ int main() {
         time12 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 1024er blocks (10000,10000)x(10000,10000): " << time11 /10<< " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with 1024er blocks (10000,10000)x(10000,10000): " << time11<< " ms" << std::endl;
 
 
     return 0;
