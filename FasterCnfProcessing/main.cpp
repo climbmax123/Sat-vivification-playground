@@ -548,5 +548,39 @@ int main() {
 
     std::cout << "Laufzeit für avx int_8 with 256er blocks (1000,1000)x(1000,1000): " << time10 /10<< " ms" << std::endl;
 
+
+
+    double time11 = 0;
+    for (int i = 0; i < 10; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Matrix-Vektor-Multiplikation
+        auto mul =  multiplyMatricesAVX512_8bit_custom_block_size(matrix3, matrix4, 512);
+
+        // Zeitmessung stoppen
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        time11 += duration.count();
+    }
+
+    std::cout << "Laufzeit für avx int_8 with 512er blocks (1000,1000)x(1000,1000): " << time11 /10<< " ms" << std::endl;
+
+
+    double time12 = 0;
+    for (int i = 0; i < 10; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Matrix-Vektor-Multiplikation
+        auto mul =  multiplyMatricesAVX512_8bit_custom_block_size(matrix3, matrix4, 1024);
+
+        // Zeitmessung stoppen
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        time12 += duration.count();
+    }
+
+    std::cout << "Laufzeit für avx int_8 with 1024er blocks (1000,1000)x(1000,1000): " << time11 /10<< " ms" << std::endl;
+
+
     return 0;
 }
