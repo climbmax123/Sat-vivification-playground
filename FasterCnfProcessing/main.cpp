@@ -429,15 +429,15 @@ size_t calculateMatrixMemorySize(const std::vector<std::vector<bool>>& matrix) {
 }
 
 int main() {
-    auto matrix1 = createRadomMatrix<short>(100, 100);
-    auto matrix2 = createRadomMatrix<short>(100,100);
+    auto matrix1 = createRadomMatrix<short>(1000, 1000);
+    auto matrix2 = createRadomMatrix<short>(1000,1000);
 
-    auto matrix3 = createRadomMatrix<int8_t>(4000, 4000);
-    auto matrix4 = createRadomMatrix<int8_t>(4000,1);
+    auto matrix3 = createRadomMatrix<int8_t>(10000, 10000);
+    auto matrix4 = createRadomMatrix<int8_t>(10000,10000);
 
-    auto matrix5 = createRadomMatrix<int>(100, 100);
-    auto matrix6 = createRadomMatrix<int>(100,100   );
-
+    auto matrix5 = createRadomMatrix<int>(1000, 1000);
+    auto matrix6 = createRadomMatrix<int>(1000,1000);
+    
     auto vector3 = std::vector<bool>(50000, 1);
 
     double time3 = 0;
@@ -445,7 +445,7 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul = multiplyMatrices(matrix5, matrix6);
+        //auto mul = multiplyMatrices(matrix5, matrix6);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -461,7 +461,7 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul = multiplyMatrices(matrix1, matrix2);
+        //auto mul = multiplyMatrices(matrix1, matrix2);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -476,7 +476,7 @@ int main() {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul =  multiplyMatricesAVX512(matrix5, matrix6);
+        //auto mul =  multiplyMatricesAVX512(matrix5, matrix6);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -488,11 +488,11 @@ int main() {
 
 
     double time7 = 0;
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 100; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul =  multiplyMatricesAVX512_8bit(matrix3, matrix4);
+        //auto mul =  multiplyMatricesAVX512_8bit(matrix3, matrix4);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -500,10 +500,10 @@ int main() {
         time7 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time7/1 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time7/100 << " ms" << std::endl;
 
     double time8 = 0;
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 5; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
@@ -515,14 +515,14 @@ int main() {
         time8 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time8 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with transposed (10000,10000)x(10000,10000): " << time8/5 << " ms" << std::endl;
 
     double time9 = 0;
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 100; i++) {
         auto start = std::chrono::high_resolution_clock::now();
 
         // Matrix-Vektor-Multiplikation
-        auto mul =  multiplyMatricesAVX512_8bit_Transposed_64Block(matrix3, matrix4);
+        //auto mul =  multiplyMatricesAVX512_8bit_Transposed_64Block(matrix3, matrix4);
 
         // Zeitmessung stoppen
         auto end = std::chrono::high_resolution_clock::now();
@@ -530,7 +530,7 @@ int main() {
         time9 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int_8 with 64er blocks (1000,1000)x(1000,1000): " << time9 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 with tansposed and 64er blocks (1000,1000)x(1000,1000): " << time9/100 << " ms" << std::endl;
 
 
     return 0;
