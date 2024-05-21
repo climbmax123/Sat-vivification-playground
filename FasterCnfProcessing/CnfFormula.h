@@ -11,6 +11,8 @@
 class CnfFormula {
 
 private:
+    // modern CPUs are pretty fast working with
+
     // We work with the following structure
     //      c1  c2  c3  c4  ...
     //  l1  1   0   1   0
@@ -28,6 +30,14 @@ private:
     //  c4   0    0   1   0
     //  ...
     std::vector<std::vector<bool>> normal;
+
+    // We further need a way to store the Watchers.
+    // We store that as a further
+    std::vector<std::vector<bool>> watched_literal_map;
+
+
+
+
 
     // Note: In our Program we need to always ensure that they are equal (Transposed to each other).
 

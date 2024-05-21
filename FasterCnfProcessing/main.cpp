@@ -308,6 +308,115 @@ std::vector<std::vector<int>> multiplyMatricesAVX512_8bit(const std::vector<std:
 
 
 
+#include <immintrin.h>
+#include <vector>
+#include <stdexcept>
+
+std::vector<std::vector<int>> multiplyMatricesAVX512_8bit_Transposed(
+        const std::vector<std::vector<int8_t>>& A,
+        const std::vector<std::vector<int8_t>>& B_transposed) {
+
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_rows = B_transposed.size();  // Originally B_cols in non-transposed
+
+    // Ensure that the matrix dimensions are compatible for multiplication
+    if (A_cols != B_rows) {
+        throw std::invalid_argument("Matrix dimensions must be compatible for multiplication.");
+    }
+
+    std::vector<std::vector<int>> result(A_rows, std::vector<int>(B_transposed[0].size(), 0));
+
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t j = 0; j < B_transposed[0].size(); ++j) {
+            __m512i sum = _mm512_setzero_si512();  // Initialize the sum for each element in result[i][j]
+
+            for (size_t k = 0; k < A_cols; k += 64) {
+                int block_size = std::min(A_cols - k, size_t(64));
+                __m512i a_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&A[i][k]));
+                __m512i b_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&B_transposed[j][k]));
+
+                __m512i a_vals_low = _mm512_unpacklo_epi8(a_vals, _mm512_setzero_si512());
+                __m512i a_vals_high = _mm512_unpackhi_epi8(a_vals, _mm512_setzero_si512());
+
+                __m512i b_vals_low = _mm512_unpacklo_epi8(b_vals, _mm512_setzero_si512());
+                __m512i b_vals_high = _mm512_unpackhi_epi8(b_vals, _mm512_setzero_si512());
+
+                __m512i mul_low = _mm512_madd_epi16(a_vals_low, b_vals_low);
+                __m512i mul_high = _mm512_madd_epi16(a_vals_high, b_vals_high);
+
+                sum = _mm512_add_epi32(sum, mul_low);
+                sum = _mm512_add_epi32(sum, mul_high);
+
+                // Accumulate sums for the elements in the block
+                if (block_size < 64) {
+                    __mmask64 mask = (1ULL << block_size) - 1;
+                    sum = _mm512_maskz_add_epi32(mask, sum, _mm512_setzero_si512());  // Mask sum to handle blocks smaller than 64
+                }
+            }
+            // Store the final summed value for each element in result[i][j]
+            int res_value = _mm512_reduce_add_epi32(sum);
+            result[i][j] = res_value;
+        }
+    }
+
+    return result;
+}
+
+
+std::vector<std::vector<int>> multiplyMatricesAVX512_8bit_Transposed_64Block(
+        const std::vector<std::vector<int8_t>>& A,
+        const std::vector<std::vector<int8_t>>& B_transposed) {
+
+    size_t A_rows = A.size();
+    size_t A_cols = A[0].size();
+    size_t B_rows = B_transposed.size();  // Originally B_cols in non-transposed
+
+    if (A_cols != B_rows) {
+        throw std::invalid_argument("Matrix dimensions must be compatible for multiplication.");
+    }
+
+    std::vector<std::vector<int>> result(A_rows, std::vector<int>(B_transposed[0].size(), 0));
+
+    for (size_t i = 0; i < A_rows; ++i) {
+        for (size_t j = 0; j < B_transposed[0].size(); ++j) {
+            __m512i temp_sums[64];  // Temporary sums for each of the 64 elements
+            for (int idx = 0; idx < 64; ++idx) {
+                temp_sums[idx] = _mm512_setzero_si512();
+            }
+
+            for (size_t k = 0; k < A_cols; k += 64) {
+                int block_size = std::min(A_cols - k, size_t(64));
+                __m512i a_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&A[i][k]));
+                __m512i b_vals = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(&B_transposed[j][k]));
+
+                __m512i a_vals_low = _mm512_unpacklo_epi8(a_vals, _mm512_setzero_si512());
+                __m512i a_vals_high = _mm512_unpackhi_epi8(a_vals, _mm512_setzero_si512());
+
+                __m512i b_vals_low = _mm512_unpacklo_epi8(b_vals, _mm512_setzero_si512());
+                __m512i b_vals_high = _mm512_unpackhi_epi8(b_vals, _mm512_setzero_si512());
+
+                __m512i mul_low = _mm512_madd_epi16(a_vals_low, b_vals_low);
+                __m512i mul_high = _mm512_madd_epi16(a_vals_high, b_vals_high);
+
+                temp_sums[k % 64] = _mm512_add_epi32(temp_sums[k % 64], mul_low);
+                temp_sums[(k + 32) % 64] = _mm512_add_epi32(temp_sums[(k + 32) % 64], mul_high);
+            }
+
+            __m512i final_sum = _mm512_setzero_si512();
+            for (int idx = 0; idx < 64; ++idx) {
+                final_sum = _mm512_add_epi32(final_sum, temp_sums[idx]);
+            }
+            int res_value = _mm512_reduce_add_epi32(final_sum);
+            result[i][j] = res_value;
+        }
+    }
+
+    return result;
+}
+
+
+
 // Specialization for std::vector<bool>
 size_t calculateMatrixMemorySize(const std::vector<std::vector<bool>>& matrix) {
     size_t rowSize = matrix.size() * sizeof(std::vector<bool>);
@@ -391,7 +500,37 @@ int main() {
         time7 += duration.count();
     }
 
-    std::cout << "Laufzeit für avx int (1000,1000)x(1000,1000): " << time7/1 << " ms" << std::endl;
+    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time7/1 << " ms" << std::endl;
+
+    double time8 = 0;
+    for (int i = 0; i < 1; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Matrix-Vektor-Multiplikation
+        auto mul =  multiplyMatricesAVX512_8bit_Transposed(matrix3, matrix4);
+
+        // Zeitmessung stoppen
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        time8 += duration.count();
+    }
+
+    std::cout << "Laufzeit für avx int_8 (1000,1000)x(1000,1000): " << time8 << " ms" << std::endl;
+
+    double time9 = 0;
+    for (int i = 0; i < 1; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Matrix-Vektor-Multiplikation
+        auto mul =  multiplyMatricesAVX512_8bit_Transposed_64Block(matrix3, matrix4);
+
+        // Zeitmessung stoppen
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> duration = end - start;
+        time9 += duration.count();
+    }
+
+    std::cout << "Laufzeit für avx int_8 with 64er blocks (1000,1000)x(1000,1000): " << time9 << " ms" << std::endl;
 
 
     return 0;
