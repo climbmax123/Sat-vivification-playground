@@ -2,7 +2,8 @@
 
 
 CNFTester::CNFTester(int variables, int clauses) : num_variables(variables), num_clauses(clauses) {
-    srand(time(0)); // Initialisierung des Zufallsgenerators
+    srand(time(0));
+    this->current_debug_clause = 0;// Initialisierung des Zufallsgenerators
 }
 
 std::string CNFTester::generateLiteral(int variable) {
@@ -211,3 +212,50 @@ std::string CNFTester::generateUUID(const std::string &input_path) {
     return "CNF_" + std::to_string(uuid) + ".cnf";
 }
 
+CDNF_formula CNFTester::deltaDebug() {
+    if(current_debug_clause >= original_cnf.size()){
+        current_debug_clause = 0;
+    }
+    new_reduces_cnf = original_cnf;
+    new_reduces_cnf.erase(new_reduces_cnf.begin()+current_debug_clause);
+    return new_reduces_cnf;
+}
+
+void CNFTester::applyReduce(bool apply) {
+    if(apply){
+        original_cnf = new_reduces_cnf;
+    } else {
+        current_debug_clause++;
+    }
+}
+
+
+CDNF_formula CNFTester::deltaLiteralDebug(){
+    int lit = 0;
+    for(auto cl: original_cnf){
+        for(int i : cl){
+            if(!this->reduced.contains(std::abs(i))){
+                lit = i;
+                reduced.insert(i);
+            }
+        }
+    }
+    this->new_reduces_cnf = original_cnf;
+    for (auto& vec : new_reduces_cnf) {
+       std::remove(vec.begin(), vec.end(), lit);
+       std::remove(vec.begin(), vec.end(), -lit);
+    }
+    return new_reduces_cnf;
+}
+
+void CNFTester::applyLiteralReduce(bool apply){
+    if(apply) {
+        original_cnf = new_reduces_cnf;
+    }
+}
+
+
+
+int CNFTester::size(){
+    return original_cnf.size();
+}

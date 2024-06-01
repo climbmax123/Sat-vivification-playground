@@ -6,6 +6,7 @@
 #include "watchedpreprocessing.h"
 #include "watchedliteralspreprocessing.h"
 #include "CSVWriter.h"
+#include "sortedwatchedliteralpreprocessing.h"
 #include <chrono>
 
 int numLiterals(const CDNF_formula &cnf) {
@@ -133,25 +134,26 @@ int main() {
     CSVWriter pure_lit_writer3("runtime_sorted_pure_progress-2022.csv",
                                "count,step,iteration,found_pures,reduced_clauses_count,duration");
 
-    CNFTester tester(800000, 10000);
-    auto paths = findCnfFiles("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2022");
+
+    auto paths = findCnfFiles("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/");
     std::cout << paths.size() << std::endl;
     int i = 0;
 //#pragma omp parallel for num_threads(16)
-    for (auto const &path: paths) {
+//for (auto const &path: paths) {
 
-        //for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < 10000; i++) {
         CDNF_formula cnf;
         int rank;
+        CNFTester tester(120, 100);
 //#pragma omp critical
         {
 
-            cnf = tester.loadCNF(path);
-
+            cnf = tester.generateCNF();//tester.loadCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/CNF_662.cnf");//tester.loadCNF(path);
+            //tester.saveCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/");
             rank = i++;
 
-            std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
-                      << std::endl;
+            //std::cout << "Loaded " << i << "\t\t   clauses:\t " << cnf.size() << "\t literals: \t" << numLiterals(cnf)
+            //          << std::endl;
         }
         // normal unit prop
         /*
@@ -196,17 +198,37 @@ int main() {
 
         CDNF_formula vivify3 = cnf;
         auto start5 = high_resolution_clock::now();
-        watched_literals::vivify_with_sorted_pure_lit(vivify3, rank, runtime_writer3, pure_lit_writer3);
+        sorted::vivify_with_sorted_pure_lit(vivify3);
         auto end5 = high_resolution_clock::now();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
-        /*
+
+
         if (!tester.testCNF(vivify3)) {
             std::cerr << "error not vivify3 sound" << std::endl;
-            tester.printOriginalCNF();
-            tester.printCNF(vivify3);
+            tester.saveCNF(
+                    "/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/");
+
+            int pos = 0;
+            int size = 0;
+            while (size != tester.size()) {
+                size = tester.size();
+                for (int i = 0; i < tester.size(); i++) {
+                    cnf = tester.deltaDebug();
+                    sorted::vivify_with_sorted_pure_lit(cnf);
+                    tester.applyReduce(!tester.testCNF(cnf));
+                }
+
+                for (int j = 0; j < numLiterals(cnf); j++) {
+                    cnf = tester.deltaLiteralDebug();
+                    sorted::vivify_with_sorted_pure_lit(cnf);
+                    tester.applyLiteralReduce(!tester.testCNF(cnf));
+                }
+
+                tester.saveCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases2/");
+            }
             exit(3);
         }
-        */
+
         std::cout << "Vivification Times (in milliseconds):" << std::endl;
         //std::cout << "Without pure literals: " << duration3 << " ms \t size: " << vivify.size() << std::endl;
         //std::cout << "With pure literals: " << duration4 << " ms \t size: " << vivify2.size() << std::endl;

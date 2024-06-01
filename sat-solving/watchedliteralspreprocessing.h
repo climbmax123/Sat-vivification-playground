@@ -26,8 +26,6 @@ namespace watched_literals {
 
     void vivify_with_pure_lit(CDNF_formula &cnf, int global_count, CSVWriter &writer, CSVWriter& pure_writer);
 
-    void vivify_with_sorted_pure_lit(CDNF_formula &cnf, int global_count, CSVWriter &writer, CSVWriter& pure_writer);
-
 }
 
 #endif

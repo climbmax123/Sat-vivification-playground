@@ -25,7 +25,14 @@ class CNFTester {
   int num_variables;
   int num_clauses;
 
+  std::set<int> reduced;
+
   CDNF_formula original_cnf;
+
+  CDNF_formula new_reduces_cnf;
+
+  int current_debug_clause;
+
 
   void saveCNFToFile(const std::string& filePath, const CDNF_formula& cnf);
 
@@ -52,6 +59,18 @@ class CNFTester {
   void saveCNF(const std::string& path);
 
   CDNF_formula loadCNF(const std::string& path);
+
+
+  CDNF_formula deltaDebug();
+
+  void applyReduce(bool apply);
+
+
+  CDNF_formula deltaLiteralDebug();
+
+  void applyLiteralReduce(bool apply);
+
+  int size();
 
 };
 

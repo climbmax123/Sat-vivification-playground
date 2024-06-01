@@ -11,6 +11,7 @@
 #include <algorithm>
 
 namespace fast {
+
     void UnitPropagation(CDNF_formula &cnf) {
         bool progress = true;
         while (progress) {
@@ -282,4 +283,5 @@ namespace fast {
             }
         }
     }
+
 }

@@ -8,6 +8,8 @@
 #include "types.h"
 #include <set>
 
+// TODO: Adapt this for new Viviy
+
 namespace vivify{
     void watched_literals_unit_propagation(QBF &qbf);
 
