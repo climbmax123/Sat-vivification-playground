@@ -40,6 +40,9 @@ add_executable(Vivifcation sat-solving/main.cpp
 )
 
 add_executable(FasterCNF FasterCnfProcessing/main.cpp
+        sat-preprocessor/main.cpp
+        sat-preprocessor/combinedpreprocessing.cpp
+        sat-preprocessor/combinedpreprocessing.h
 )
 
 
@@ -53,6 +56,10 @@ add_executable(preprocess qbf-preprocessing/main.cpp
         qbf-preprocessing/vivify.h
         qbf-preprocessing/types.h
         )
+
+add_executable(sat-preprocessor sat-preprocessor/main.cpp sat-preprocessor/combinedpreprocessing.cpp sat-preprocessor/combinedpreprocessing.h sat-preprocessor/sortedwatchedliteralpreprocessing.cpp
+        sat-preprocessor/sortedwatchedliteralpreprocessing.h sat-preprocessor/types.h sat-preprocessor/watchedliteralspreprocessing.h sat-preprocessor/watchedliteralspreprocessing.cpp
+)
 
 target_link_libraries(Vivifcation PRIVATE OpenMP::OpenMP_CXX)
 target_link_libraries(FasterCNF PRIVATE TBB::tbb)
