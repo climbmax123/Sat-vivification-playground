@@ -37,6 +37,10 @@ add_executable(Vivifcation sat-solving/main.cpp
         sat-solving/CSVWriter.cpp
         sat-solving/sortedwatchedliteralpreprocessing.cpp
         sat-solving/sortedwatchedliteralpreprocessing.h
+        sat-solving/sortedwatchedliteralpreprocessing2.cpp
+        sat-solving/sortedwatchedliteralpreprocessing2.h
+        sat-solving/combinedpreprocessing.h
+        sat-solving/combinedpreprocessing.cpp
 )
 
 add_executable(FasterCNF FasterCnfProcessing/main.cpp
@@ -55,7 +59,9 @@ add_executable(preprocess qbf-preprocessing/main.cpp
         qbf-preprocessing/vivify.cpp
         qbf-preprocessing/vivify.h
         qbf-preprocessing/types.h
-        )
+        qbf-preprocessing/unit_propagation.cpp
+        qbf-preprocessing/unit_propagation.h
+)
 
 add_executable(sat-preprocessor sat-preprocessor/main.cpp sat-preprocessor/combinedpreprocessing.cpp sat-preprocessor/combinedpreprocessing.h sat-preprocessor/sortedwatchedliteralpreprocessing.cpp
         sat-preprocessor/sortedwatchedliteralpreprocessing.h sat-preprocessor/types.h sat-preprocessor/watchedliteralspreprocessing.h sat-preprocessor/watchedliteralspreprocessing.cpp

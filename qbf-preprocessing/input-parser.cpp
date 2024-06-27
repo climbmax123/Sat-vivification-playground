@@ -42,32 +42,22 @@ QBF parse_DIMACS_main(std::istream &in) {
             }
             continue;
         }
+        // parse matrix
         std::vector<int> vc = std::vector<int>(words.size() - 1);
         for (int j = 0; j < words.size() - 1; j++) {
-            auto l = std::stoi(words[j]);
-            if (qbf.quantifierType[abs(l)] == FORALL){
-                vc[j] = abs(l);
-            } else {
-                vc[j] = l;
-            }
+            vc[j] = std::stoi(words[j]);
         }
+        // sort it after appearance
         std::vector<int> sorted_vc;
         for (const auto &qt: qbf.quantifierOrder) {
             if(std::find(vc.begin(), vc.end(), qt) != vc.end()){
-                if(qbf.quantifierType[abs(qt)] == FORALL){
-                    sorted_vc.emplace_back(abs(qt));
-                }else{
-                    sorted_vc.emplace_back(qt);
-                }
+                sorted_vc.emplace_back(qt);
             }
             if(std::find(vc.begin(), vc.end(), -qt) != vc.end()){
-                if(qbf.quantifierType[abs(qt)] == FORALL){
-                    sorted_vc.emplace_back(abs(qt));
-                } else {
-                    sorted_vc.emplace_back(-qt);
-                }
+                sorted_vc.emplace_back(-qt);
             }
         }
+        // place it back
         qbf.formula.push_back(std::move(sorted_vc));
     }
     return qbf;

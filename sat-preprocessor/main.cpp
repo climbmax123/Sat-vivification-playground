@@ -14,7 +14,7 @@
 #include <sstream>
 
 #include <getopt.h>
-
+#include <unordered_map>
 #include "types.h"
 #include "sortedwatchedliteralpreprocessing.h"
 #include "watchedliteralspreprocessing.h"
@@ -53,6 +53,16 @@ CDNF_formula parseCDNFFromFile(std::string path) {
 
 void writeCDNFFile(std::string path, CDNF_formula &cnf) {
     std::ofstream file(path);
+    int max = 0;
+    for(auto & c: cnf){
+        for(auto l: c){
+            if(std::abs(l) > max){
+                max = std::abs(l);
+            }
+        }
+    }
+
+    file << "p cnf " << max << " " << cnf.size() << "\n";
     if (file.is_open()) {
         for (const auto &clause: cnf) {
             for (const auto &literal: clause) {
@@ -114,7 +124,7 @@ int main(int argc, char *argv[]) {
 
     auto start_process = std::chrono::high_resolution_clock::now();
     int timeLimitInSeconds = 60*60; // we give it a timeout of 1h
-    std::map<int, int> mapping;
+    std::unordered_map<int, int> mapping;
 
     switch (mode) {
         case UNIT:

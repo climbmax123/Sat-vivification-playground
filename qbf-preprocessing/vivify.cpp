@@ -7,7 +7,11 @@
 
 namespace vivify {
 
-    void watched_literals_unit_propagation(QBF &qbf) {
+    void watched_literals_unit_propagation(QBF &qbf){
+
+    }
+
+    void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf) {
 
         std::unordered_map<int, QuantifierType> quantifiers;
         std::unordered_map<int, std::vector<std::pair<int, int>>> watchers; // clause, lit

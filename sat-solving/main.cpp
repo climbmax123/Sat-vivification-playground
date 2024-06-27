@@ -7,6 +7,7 @@
 #include "watchedliteralspreprocessing.h"
 #include "CSVWriter.h"
 #include "sortedwatchedliteralpreprocessing.h"
+#include "combinedpreprocessing.h"
 #include <chrono>
 
 int numLiterals(const CDNF_formula &cnf) {
@@ -144,7 +145,7 @@ int main() {
     for (int i = 0; i < 10000; i++) {
         CDNF_formula cnf;
         int rank;
-        CNFTester tester(120, 100);
+        CNFTester tester(10, 10);
 //#pragma omp critical
         {
 
@@ -198,7 +199,7 @@ int main() {
 
         CDNF_formula vivify3 = cnf;
         auto start5 = high_resolution_clock::now();
-        sorted::vivify_with_sorted_pure_lit(vivify3);
+        combined::combined_methode(vivify3, 1000);
         auto end5 = high_resolution_clock::now();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
 
@@ -214,13 +215,13 @@ int main() {
                 size = tester.size();
                 for (int i = 0; i < tester.size(); i++) {
                     cnf = tester.deltaDebug();
-                    sorted::vivify_with_sorted_pure_lit(cnf);
+                    combined::combined_methode(cnf, 10000);
                     tester.applyReduce(!tester.testCNF(cnf));
                 }
 
                 for (int j = 0; j < numLiterals(cnf); j++) {
                     cnf = tester.deltaLiteralDebug();
-                    sorted::vivify_with_sorted_pure_lit(cnf);
+                    combined::combined_methode(cnf);
                     tester.applyLiteralReduce(!tester.testCNF(cnf));
                 }
 
