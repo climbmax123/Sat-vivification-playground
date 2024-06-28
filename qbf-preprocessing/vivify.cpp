@@ -13,7 +13,6 @@ namespace vivify {
 
     void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf) {
 
-        std::unordered_map<int, QuantifierType> quantifiers;
         std::unordered_map<int, std::vector<std::pair<int, int>>> watchers; // clause, lit
 
         std::vector<int> unit_clauses;
@@ -27,7 +26,7 @@ namespace vivify {
             if (qbf.formula[i].size() > 1) {
                 auto t = qbf.formula[i].size() - 1;
                 while (t > 0) {
-                    if (qbf.quantifierType[abs(qbf.formula[i][t])] == EXISTS) {
+                    if (qbf.quantifierTypeIsExists[abs(qbf.formula[i][t])]) {
                         watchers[qbf.formula[i][t]].emplace_back(i, t);
                         watchers[qbf.formula[i][t - 1]].emplace_back(i, t - 1);
                         break;
@@ -36,7 +35,7 @@ namespace vivify {
                 }
                 // With universal reduction this may be a unit clause
                 if (t == 0) {
-                    if (qbf.quantifierType[abs(qbf.formula[i][0])] == EXISTS) {
+                    if (qbf.quantifierTypeIsExists[abs(qbf.formula[i][0])]) {
                         unit_clauses.push_back(qbf.formula[i][0]);
                     } else {
                         qbf.formula = {{}};
@@ -45,7 +44,7 @@ namespace vivify {
                 }
             }
             if (qbf.formula[i].size() == 1) {
-                if (qbf.quantifierType[abs(qbf.formula[i][0])] == EXISTS) {
+                if (qbf.quantifierTypeIsExists[abs(qbf.formula[i][0])]) {
                     unit_clauses.push_back(qbf.formula[i][0]);
                 } else {
                     qbf.formula = {{}}; // formula is false only one universal lit in over
@@ -109,7 +108,7 @@ namespace vivify {
                             watchers[qbf.formula[watcher.first][lit_pos]].end()) {
 
                             // The other Watcher must be existential if we overstep it. Otw. we have to rest it
-                            if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
+                            if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])]) {
                                 // remove the watcher
                                 watchers[qbf.formula[watcher.first][lit_pos]]
                                         .erase(std::find(watchers[qbf.formula[watcher.first][lit_pos]].begin(),
@@ -130,7 +129,7 @@ namespace vivify {
                                         continue;
                                     }
                                     // check if literal is existential
-                                    if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
+                                    if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])] ) {
                                         lit_pos--;
                                         continue;
                                     }
@@ -161,7 +160,7 @@ namespace vivify {
 
                         // if already the positive is propagated existential literal. In general this should always be existential
                         if (propagated_literals.contains(qbf.formula[watcher.first][lit_pos])
-                            && qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == EXISTS) {
+                            && qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])]) {
                             sat_clauses[watcher.first] = true;
                             break;
                         }
@@ -224,7 +223,7 @@ namespace vivify {
             bool add = true;
             bool reduce = true;
             for (int j = qbf.formula[i].size() - 1; j >= 0; j--) {
-                if (reduce && qbf.quantifierType[abs(qbf.formula[i][j])] == FORALL) {
+                if (reduce && !qbf.quantifierTypeIsExists[abs(qbf.formula[i][j])]) {
                     continue;
                 }
                 if (propagated_literals.contains(qbf.formula[i][j])) {
@@ -242,7 +241,7 @@ namespace vivify {
             }
         }
         std::vector<int> newQuantifierOrder;
-        std::unordered_map<int, QuantifierType> newQuantors;
+        std::unordered_map<int, bool> newQuantors;
         // Now we reduce the quantors
         for (int element: qbf.quantifierOrder) {
             bool found = false;
@@ -254,12 +253,12 @@ namespace vivify {
             }
             if (found) {
                 newQuantifierOrder.push_back(element);
-                newQuantors[element] = qbf.quantifierType[abs(element)];
+                newQuantors[element] = qbf.quantifierTypeIsExists[abs(element)];
             }
         }
 
         qbf.formula = std::move(new_formula);
-        qbf.quantifierType = std::move(newQuantors);
+        qbf.quantifierTypeIsExists = std::move(newQuantors);
         qbf.quantifierOrder = std::move(newQuantifierOrder);
     }
 
@@ -278,7 +277,7 @@ namespace vivify {
             // We know here that we don't contain units and emtpy clauses
             auto t = qbf.formula[i].size() - 1;
             while (t > 0) {
-                if (qbf.quantifierType[abs(qbf.formula[i][t])] == EXISTS) {
+                if (qbf.quantifierTypeIsExists[abs(qbf.formula[i][t])]) {
                     info.watchers[qbf.formula[i][t]].emplace_back(i, t);
                     info.watchers[qbf.formula[i][t - 1]].emplace_back(i, t - 1);
                     break;
@@ -291,7 +290,7 @@ namespace vivify {
 
     int select_a_literal(QBF &qbf, const std::vector<int> &c, const std::vector<int> &cb) {
         for (int lit: c) {
-            if (qbf.quantifierType[abs(lit)] == EXISTS) {
+            if (qbf.quantifierTypeIsExists[abs(lit)]) {
                 if (std::find(cb.begin(), cb.end(), lit) == cb.end()) {
                     return lit;
                 }
@@ -348,7 +347,7 @@ namespace vivify {
                             runtime_info.watchers[qbf.formula[watcher.first][lit_pos]].end()) {
 
                             // The other Watcher must be existential if we overstep it. Otw. we have to rest it
-                            if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
+                            if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])]) {
                                 // remove the watcher
                                 runtime_info.watchers[qbf.formula[watcher.first][lit_pos]]
                                         .erase(std::find(
@@ -377,7 +376,7 @@ namespace vivify {
                                         continue;
                                     }
                                     // check if literal is existential
-                                    if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
+                                    if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])]) {
                                         lit_pos--;
                                         continue;
                                     }
@@ -411,7 +410,7 @@ namespace vivify {
                         // if already the positive is propagated existential literal. In general this should always be existential
                         if (std::find(runtime_info.propagated_literals.begin(), runtime_info.propagated_literals.end(),
                                       qbf.formula[watcher.first][lit_pos]) != runtime_info.propagated_literals.end()
-                            && qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == EXISTS) {
+                            && qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][lit_pos])]) {
                             runtime_info.clauseIsSat[watcher.first] = true;
                             break;
                         }
@@ -481,7 +480,7 @@ namespace vivify {
         std::vector<int> new_c;
         // Add the literals
         for (int j: c) {
-            if (qbf.quantifierType[abs(j)] == FORALL) {
+            if (!qbf.quantifierTypeIsExists[abs(j)]) {
                 new_c.push_back(j);
                 continue;
             }
@@ -492,7 +491,7 @@ namespace vivify {
         }
         // Apply universal reduction
         for (int j = new_c.size() - 1; j >= 0; j--) {
-            if (qbf.quantifierType[abs(new_c[j])] == FORALL) {
+            if (!qbf.quantifierTypeIsExists[abs(new_c[j])]) {
                 new_c.pop_back();
             } else {
                 break;
@@ -510,7 +509,7 @@ namespace vivify {
         // Create new Watchers for the clause
         auto t = new_c.size() - 1;
         while (t > 0) {
-            if (qbf.quantifierType[abs(new_c[t])] == EXISTS) {
+            if (qbf.quantifierTypeIsExists[abs(new_c[t])]) {
                 runtimeInfo.watchers[new_c[t]].emplace_back(i, t);
                 runtimeInfo.watchers[new_c[t - 1]].emplace_back(i, t - 1);
                 break;
@@ -523,9 +522,9 @@ namespace vivify {
 
     void printQBF(QBF &qbf) {
         for (const auto &qt: qbf.quantifierOrder) {
-            if (qbf.quantifierType[qt] == EXISTS) {
+            if (qbf.quantifierTypeIsExists[qt]) {
                 std::cout << "E ";
-            } else if (qbf.quantifierType[qt] == FORALL) {
+            } else if (!qbf.quantifierTypeIsExists[qt]) {
                 std::cout << "A ";
             }
             std::cout << qt << " ";
@@ -544,7 +543,7 @@ namespace vivify {
 
     bool is_equal_on_exists(QBF &qbf, std::vector<int> c, std::vector<int> cb){
         for(int lit : c){
-            if(qbf.quantifierType[abs(lit)] == EXISTS){
+            if(qbf.quantifierTypeIsExists[abs(lit)]){
                 if (std::find(cb.begin(),cb.end(), lit) == cb.end()){
                     return false;
                 }

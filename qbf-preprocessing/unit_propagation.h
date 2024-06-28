@@ -7,10 +7,10 @@
 #ifndef VIVIFCATION_UNIT_PROPAGATION_H
 #define VIVIFCATION_UNIT_PROPAGATION_H
 
-
-void watched_literals_unit_propagation(QBF &qbf);
-
-void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf)
+namespace unit {
+    void watched_literals_unit_propagation_with_up(QBF &qbf);
+}
+//void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf)
 
 
 #endif //VIVIFCATION_UNIT_PROPAGATION_H

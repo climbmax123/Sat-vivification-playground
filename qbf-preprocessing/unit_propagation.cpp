@@ -4,8 +4,11 @@
 
 #include <set>
 #include "unit_propagation.h"
+#include <iostream>
 
+namespace unit {
 
+/*
 void watched_literals_unit_propagation(QBF &qbf) {
     std::unordered_map<int, std::vector<std::pair<int, int>>> watchers;
     std::vector<int> unit_clauses;
@@ -148,285 +151,268 @@ void watched_literals_unit_propagation(QBF &qbf) {
     }
     cnf = std::move(new_formula);
 }
+ */
 
-void watched_literal_universal_reduction(QBF &qbf) {
+    void prepare_watchers(QBF &qbf, std::unordered_map<int, std::vector<std::pair<int, int>>> &watchers,
+                          std::vector<int> &unit_clauses) {
+        for (int i = 0; i < qbf.formula.size(); i++) {
+            auto t = qbf.formula[i].size() - 1;
+            while (t > 0) {
+                if (qbf.quantifierTypeIsExists[abs(qbf.formula[i][t])]) {
+                    if (t >= 1) {
+                        watchers[qbf.formula[i][t]].emplace_back(i, t);
+                        watchers[qbf.formula[i][t - 1]].emplace_back(i, t - 1);
+                        break;
+                    }
+                }
+                t--;
+            }
+            // check if this is clause ist unit.
+            if (t == 0) {
+                auto b = qbf.formula[i].size() - 1;
+                while (!qbf.quantifierTypeIsExists[abs(qbf.formula[i][b])]) {
+                    qbf.formula[i].erase(qbf.formula[i].end() - 1);
+                    b--;
+                }
+                if (qbf.formula[i].size() == 1) {
+                    unit_clauses.push_back(qbf.formula[i][0]);
+                    continue;
+                }
+            }
+        }
+    }
 
-}
+
+    void find_other_watcher(QBF &qbf, std::unordered_map<int, std::vector<std::pair<int, int>>> &watchers,
+                            const std::pair<int, int> &watcher, int &other_watcher_pos,
+                            std::set<int> &propagated_literals,
+                            std::vector<bool> &sat_clauses) {
 
 
+        // We find the next literal and check if on the pos it is true that should contain all literals.
+        if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][watcher.second])]) {
+            for (; other_watcher_pos < qbf.formula[watcher.first].size(); other_watcher_pos++) {
+                if (propagated_literals.contains(qbf.formula[watcher.first][other_watcher_pos])) {
+                    sat_clauses[watcher.first] = true;
+                }
 
-void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf) {
-
-    std::unordered_map<int, QuantifierType> quantifiers;
-    std::unordered_map<int, std::vector<std::pair<int, int>>> watchers; // (clause, lit)
-
-    std::vector<int> unit_clauses;
-
-    // ----------------------------------------
-    // Prepare Watched literals
-    // ----------------------------------------
-    for (int i = 0; i < qbf.formula.size(); i++) {
-        auto t = qbf.formula[i].size() - 1;
-        while (t > 0) {
-            if (qbf.quantifierType[abs(qbf.formula[i][t])] == EXISTS) {
-                if(t > 1) {
-                    watchers[qbf.formula[i][t]].emplace_back(i, t);
-                    watchers[qbf.formula[i][t - 1]].emplace_back(i, t - 1);
+                if (watchers.contains(qbf.formula[watcher.first][other_watcher_pos]) &&
+                    std::find(watchers[qbf.formula[watcher.first][other_watcher_pos]].begin(),
+                              watchers[qbf.formula[watcher.first][other_watcher_pos]].end(),
+                              std::pair<int, int>{watcher.first, other_watcher_pos}) !=
+                    watchers[qbf.formula[watcher.first][other_watcher_pos]].end()) {
                     break;
                 }
             }
-            t--;
-        }
-        // check if this is clause ist unit.
-        if (t == 0) {
-            auto b = qbf.formula[i].size() - 1;
-            while (qbf.quantifierType[abs(qbf.formula[i][b])] == FORALL) {
-                qbf.formula[i].erase(qbf.formula[i].end() - 1);
-                b--;
+        } else {
+            int pos = other_watcher_pos;
+            bool found = false;
+            for (; pos < qbf.formula[watcher.first].size(); pos++) {
+                if (propagated_literals.contains(qbf.formula[watcher.first][pos])) {
+                    sat_clauses[watcher.first] = true;
+                }
+                if (watchers.contains(qbf.formula[watcher.first][pos]) &&
+                    std::find(watchers[qbf.formula[watcher.first][pos]].begin(),
+                              watchers[qbf.formula[watcher.first][pos]].end(),
+                              std::pair<int, int>{watcher.first, pos}) !=
+                    watchers[qbf.formula[watcher.first][pos]].end()) {
+                    other_watcher_pos = pos;
+                    found = true;
+                    break;
+                }
             }
-            if(qbf.formula[i].size() == 1) {
-                unit_clauses.push_back(qbf.formula[i][0]);
-                continue;
+            if (!found) {
+                pos = other_watcher_pos - 2;
+                for (; pos >= 0; pos--) {
+                    if (propagated_literals.contains(qbf.formula[watcher.first][pos])) {
+                        sat_clauses[watcher.first] = true;
+                    }
+                    if (watchers.contains(qbf.formula[watcher.first][pos]) &&
+                        std::find(watchers[qbf.formula[watcher.first][pos]].begin(),
+                                  watchers[qbf.formula[watcher.first][pos]].end(),
+                                  std::pair<int, int>{watcher.first, pos}) !=
+                        watchers[qbf.formula[watcher.first][pos]].end()) {
+                        other_watcher_pos = pos;
+                        break;
+                    }
+                }
             }
-            qbf.formula = {{}};
-            return;
         }
     }
 
-    // we keep track and later we use that to reduce the formula
-    std::set<int> propagated_literals;
-    std::vector<bool> sat_clauses = std::vector<bool>(qbf.formula.size());
 
-    int count = 0;
-    while (count < unit_clauses.size()) {
-        propagated_literals.insert(unit_clauses[count]);
+    void watched_literals_unit_propagation_with_up(QBF &qbf) {
 
-        // we set all clauses to true that are watched by unit this can only be existential literals
-        if (watchers.contains(unit_clauses[count])) {
-            for (const auto watcher: watchers[unit_clauses[count]]) {
-                sat_clauses[watcher.first] = true;
-            }
-            // we don't replace the watchers due to the simple fact that the clause is already sat
-            watchers.erase(unit_clauses[count]);
-        }
+        std::unordered_map<int, std::vector<std::pair<int, int>>> watchers; // (clause, lit)
 
-        // we have to update all watchers that watch -l and reset them
-        if (watchers.contains(-unit_clauses[count])) {
+        std::vector<int> unit_clauses;
 
-            // we have to replace the watchers for that literal
-            for (const auto watcher: watchers[-unit_clauses[count]]) {
-                // if the clause os already sat we don't care
-                if (sat_clauses[watcher.first]) continue;
+        // Step 1: Prepare The watchers
+        prepare_watchers(qbf, watchers, unit_clauses);
 
-                // We start with the next literal
-                int lit_pos = watcher.second - 1;
-                int other_watcher_pos = watcher.second + 1;
+        // We keep track and apply later
+        std::set<int> propagated_literals;
+        std::vector<bool> sat_clauses = std::vector<bool>(qbf.formula.size());
 
-                if(qbf.quantifierType[abs(qbf.formula[watcher.first][watcher.second])] == FORALL){
-                    for(; other_watcher_pos < qbf.formula[watcher.first].size(); other_watcher_pos++){
-                        if (watchers.contains(qbf.formula[watcher.first][other_watcher_pos]) &&
-                            std::find(watchers[qbf.formula[watcher.first][other_watcher_pos]].begin(),
-                                      watchers[qbf.formula[watcher.first][other_watcher_pos]].end(),
-                                      std::pair<int, int>{watcher.first, other_watcher_pos}) !=
-                            watchers[qbf.formula[watcher.first][other_watcher_pos]].end()) {
-                            break;
-                        }
-                    }
+        int count = 0;
+        while (count < unit_clauses.size()) {
+            propagated_literals.insert(unit_clauses[count]);
+            std::cout << "Propagating: " << unit_clauses[count] << std::endl;
+            // Step2: We remove alle literals who are set true (We only propagate existential so issue with universals)
+            if (watchers.contains(unit_clauses[count])) {
+                for (const auto watcher: watchers[unit_clauses[count]]) {
+                    sat_clauses[watcher.first] = true;
                 }
+            }
+/*
+            std::cout << "Formula: ";
+            for(int i = 0; i < qbf.formula.size(); i++){
+                if(sat_clauses[i]){
+                    std::cout << "T ";
+                } else {
+                    std::cout << "F ";
+                }
+                std::cout <<"(";
+                for(auto lit:qbf.formula[i])
+                    std::cout << lit << ",";
+                std::cout << ") ";
+            }
+            */
+            std::cout << std::endl;
 
-                if()
+            // Step3: The negative case: we have to update all watchers that watch -l and reset them
+            if (watchers.contains(-unit_clauses[count])) {
+                for (const auto watcher: watchers[-unit_clauses[count]]) {
 
-                bool found_new_watcher = false;
+                    // If-clause is sat we don't care
+                    if (sat_clauses[watcher.first]) continue;
 
-                 // we want to find the other watcher quickly.
+                    // Step 3.1 Find the other watcher
+                    int other_watcher_pos = watcher.second + 1;
+                    find_other_watcher(qbf, watchers, watcher, other_watcher_pos, propagated_literals, sat_clauses);
 
-                // We go the other way around from current pos to 0
-                while (lit_pos >= 0) {
+                    if (sat_clauses[watcher.first]) continue; // could be found to be sat in while the search of the other watcher
 
-                    // if next position is already the other Watcher
-                    if (watchers.contains(qbf.formula[watcher.first][lit_pos]) &&
-                        std::find(watchers[qbf.formula[watcher.first][lit_pos]].begin(),
-                                  watchers[qbf.formula[watcher.first][lit_pos]].end(),
-                                  std::pair<int, int>{watcher.first, lit_pos}) !=
-                        watchers[qbf.formula[watcher.first][lit_pos]].end()) {
+                    // Step 3.2 Find next watched position
+                    int found_new_watcher = 0;
 
-                        // The other Watcher must be existential if we overstep it. Otw. we have to rest it
-                        if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
-                            // remove the watcher
-                            watchers[qbf.formula[watcher.first][lit_pos]]
-                                    .erase(std::find(watchers[qbf.formula[watcher.first][lit_pos]].begin(),
-                                                     watchers[qbf.formula[watcher.first][lit_pos]].end(),
-                                                     std::pair<int, int>{watcher.first, lit_pos}));
+                    // We can assume if the watcher pos < the other watcher then we will overstep it.
+                    // Therefore we look if the other watcher is < the current otherwise it is existential by design
+                    // If it is existential we look other watcher pos-1 for the next exist/forall literal
+                    // OTW we set the other watcher to the next existential var and thenn start other_watcher - 1 with the search.
+                    std::cout << "here" << std::endl;
+                    // We have to check if we are already sat all the time.
+                    if (watcher.second > other_watcher_pos) {
+                        if (!qbf.quantifierTypeIsExists[std::abs(qbf.formula[watcher.first][other_watcher_pos])]) {
+                            watchers[qbf.formula[watcher.first][other_watcher_pos]].erase(
+                                    std::find(watchers[qbf.formula[watcher.first][other_watcher_pos]].begin(),
+                                              watchers[qbf.formula[watcher.first][other_watcher_pos]].end(),
+                                              std::pair<int, int>{watcher.first, other_watcher_pos}));
 
-                            lit_pos--;
-                            // find the next existential watcher
-                            while (lit_pos >= 0) {
-                                // check if we have found a positive existential
-                                if (propagated_literals.contains(qbf.formula[watcher.first][lit_pos])) {
+                            while (other_watcher_pos > 0) {
+                                other_watcher_pos--;
+                                if (propagated_literals.contains(qbf.formula[watcher.first][other_watcher_pos])) {
                                     sat_clauses[watcher.first] = true;
                                     break;
                                 }
-                                // check if literal is already assigned
-                                if (propagated_literals.contains(-qbf.formula[watcher.first][lit_pos])) {
-                                    lit_pos--;
+                                if (propagated_literals.contains(-qbf.formula[watcher.first][other_watcher_pos])) {
+                                    sat_clauses[watcher.first] = true;
                                     continue;
                                 }
-                                // check if literal is existential
-                                if (qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == FORALL) {
-                                    lit_pos--;
+                                if (!qbf.quantifierTypeIsExists[std::abs(
+                                        qbf.formula[watcher.first][other_watcher_pos])]) {
                                     continue;
                                 }
-
-                                // now we have found the next existential unassigned literal
-                                other_watcher_pos = lit_pos;
-                                if (watchers.contains(qbf.formula[watcher.first][lit_pos])) {
-                                    watchers[qbf.formula[watcher.first][lit_pos]].emplace_back(watcher.first,
-                                                                                               lit_pos);
-                                    break;
-                                }
-                                watchers[qbf.formula[watcher.first][lit_pos]] = {{watcher.first, lit_pos}};
-
-                            }
-                            if (sat_clauses[watcher.first]) {
+                                found_new_watcher++;
                                 break;
                             }
-                            // If universal reduction would yield an empty clause
-                            if (lit_pos < 0) {
-                                qbf.formula = {{}};
-                                return;
-                            }
                         }
-
-                        lit_pos--;
-                        continue;
                     }
+                    if (sat_clauses[watcher.first]) continue;
 
-                    // if already the positive is propagated existential literal. In general this should always be existential
-                    if (propagated_literals.contains(qbf.formula[watcher.first][lit_pos])
-                        && qbf.quantifierType[abs(qbf.formula[watcher.first][lit_pos])] == EXISTS) {
-                        sat_clauses[watcher.first] = true;
-                        break;
-                    }
-
-                    // if already the negative is propagated continue
-                    if (propagated_literals.contains(-qbf.formula[watcher.first][lit_pos])) {
-                        lit_pos--;
-                        continue;
-                    }
-
-                    // We know that the first watcher is before this watcher and existential
-                    // If this would be the one behind we would have overstepped the watcher and reset it
-                    // If this would be the one before we know that the other is existential
-                    // Therefore we can pick any literal here.
-                    found_new_watcher = true;
-                    if (watchers.contains(qbf.formula[watcher.first][lit_pos])) {
-                        watchers[qbf.formula[watcher.first][lit_pos]].emplace_back(watcher.first, lit_pos);
-                        break;
-                    }
-
-                    watchers[qbf.formula[watcher.first][lit_pos]] = {{watcher.first, lit_pos}};
-                }
-
-                // In this case we have found only one watcher and therefore a new unit clause
-                if (!found_new_watcher) {
-                    for (int other = other_watcher_pos; other < qbf.formula[watcher.first].size(); other++) {
-                        if (propagated_literals.contains(qbf.formula[watcher.first][other])) {
+                    for (int watcher_pos = other_watcher_pos - 1; watcher_pos >= 0; watcher_pos--) {
+                        if (propagated_literals.contains(qbf.formula[watcher.first][other_watcher_pos])) {
                             sat_clauses[watcher.first] = true;
                             break;
                         }
-
-                        if (watchers.contains(qbf.formula[watcher.first][other]) &&
-                            std::find(watchers[qbf.formula[watcher.first][other]].begin(),
-                                      watchers[qbf.formula[watcher.first][other]].end(),
-                                      std::pair<int, int>{watcher.first, lit_pos}) !=
-                            watchers[qbf.formula[watcher.first][lit_pos]].end()) {
-
-                            // If we have a conflict form unit propagation
-                            if (propagated_literals.contains(-qbf.formula[watcher.first][lit_pos])) {
-                                qbf.formula = {{}}; // if conflict found
-                                return;
-                            }
-
-                            unit_clauses.push_back(qbf.formula[watcher.first][other]);
-                            break;
+                        if (propagated_literals.contains(-qbf.formula[watcher.first][other_watcher_pos])) {
+                            sat_clauses[watcher.first] = true;
+                            continue;
                         }
+                        found_new_watcher++;
+                        watchers[qbf.formula[watcher.first][watcher_pos]].emplace_back(watcher.first, watcher_pos);
+                        break;
+                    }
+                    std::cout << "here " << watcher.first << ", " << found_new_watcher << std::endl;
+                    if (sat_clauses[watcher.first]) continue;
+                    std::cout << "here " << watcher.first << ", " << found_new_watcher << std::endl;
+                    if (found_new_watcher == 2) {
+
+                        watchers[qbf.formula[watcher.first][other_watcher_pos]].emplace_back(watcher.first,
+                                                                                             other_watcher_pos);
+                    }
+
+                    if (found_new_watcher == 1) {
+                        unit_clauses.push_back(qbf.formula[watcher.first][other_watcher_pos]);
+                    }
+
+                    if (found_new_watcher == 0) {
+                        // formula is unsat
+                        qbf.formula = {{}};
+                        return;
                     }
                 }
-
             }
-            watchers.erase(-unit_clauses[count]);
+            count++;
         }
-        count++;
+        std::vector<std::vector<int>> new_formula;
+
+        // UP apply happens here
+        for (int i = 0; i < qbf.formula.size(); i++) {
+            if (sat_clauses[i]) continue;
+            std::vector<int> cl;
+            bool add = true;
+            bool reduce = true;
+            for (int j = qbf.formula[i].size() - 1; j >= 0; j--) {
+                if (reduce && !qbf.quantifierTypeIsExists[abs(qbf.formula[i][j])]) {
+                    continue;
+                }
+                if (propagated_literals.contains(qbf.formula[i][j])) {
+                    add = false;
+                    break;
+                }
+                if (propagated_literals.contains(-qbf.formula[i][j])) {
+                    continue;
+                }
+                reduce = false;
+                cl.insert(cl.begin(), qbf.formula[i][j]);
+            }
+            if (add) {
+                new_formula.push_back(std::move(cl));
+            }
+        }
+
+        std::vector<int> newQuantifierOrder;
+        std::unordered_map<int, bool> newQuantors;
+        // Now we reduce the quantors
+        for (int element: qbf.quantifierOrder) {
+            bool found = false;
+            for (const auto &sub_vector: new_formula) {
+                if (std::find(sub_vector.begin(), sub_vector.end(), element) != sub_vector.end() ||
+                    std::find(sub_vector.begin(), sub_vector.end(), -element) != sub_vector.end()) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                newQuantifierOrder.push_back(element);
+                newQuantors[element] = qbf.quantifierTypeIsExists[abs(element)];
+            }
+        }
+
+        qbf.formula = std::move(new_formula);
+        qbf.quantifierTypeIsExists = std::move(newQuantors);
+        qbf.quantifierOrder = std::move(newQuantifierOrder);
     }
-    std::vector<std::vector<int>> new_formula;
-    // now we need to apply the knowledge
-    for (int i = 0; i < qbf.formula.size(); i++) {
-        if (sat_clauses[i]) continue;
-        std::vector<int> cl;
-        bool add = true;
-        bool reduce = true;
-        for (int j = qbf.formula[i].size() - 1; j >= 0; j--) {
-            if (reduce && qbf.quantifierType[abs(qbf.formula[i][j])] == FORALL) {
-                continue;
-            }
-            if (propagated_literals.contains(qbf.formula[i][j])) {
-                add = false;
-                break;
-            }
-            if (propagated_literals.contains(-qbf.formula[i][j])) {
-                continue;
-            }
-            reduce = false;
-            cl.insert(cl.begin(), qbf.formula[i][j]);
-        }
-        if (add) {
-            new_formula.push_back(std::move(cl));
-        }
-    }
-    std::vector<int> newQuantifierOrder;
-    std::unordered_map<int, QuantifierType> newQuantors;
-    // Now we reduce the quantors
-    for (int element: qbf.quantifierOrder) {
-        bool found = false;
-        for (const auto &sub_vector: new_formula) {
-            if (std::find(sub_vector.begin(), sub_vector.end(), element) != sub_vector.end()) {
-                found = true;
-                break;
-            }
-        }
-        if (found) {
-            newQuantifierOrder.push_back(element);
-            newQuantors[element] = qbf.quantifierType[abs(element)];
-        }
-    }
 
-    qbf.formula = std::move(new_formula);
-    qbf.quantifierType = std::move(newQuantors);
-    qbf.quantifierOrder = std::move(newQuantifierOrder);
-}
-
-
-struct runtime_info {
-    std::unordered_map<int, std::vector<std::pair<int, int>>> watchers;
-    std::vector<int> propagated_literals;
-    std::vector<bool> clauseIsSat;
-};
-
-runtime_info create_runtime_info(QBF &qbf) {
-    runtime_info info;
-    info.clauseIsSat = std::vector<bool>(qbf.formula.size());
-
-    for (int i = 0; i < qbf.formula.size(); i++) {
-        // We know here that we don't contain units and emtpy clauses
-        auto t = qbf.formula[i].size() - 1;
-        while (t > 0) {
-            if (qbf.quantifierType[abs(qbf.formula[i][t])] == EXISTS) {
-                info.watchers[qbf.formula[i][t]].emplace_back(i, t);
-                info.watchers[qbf.formula[i][t - 1]].emplace_back(i, t - 1);
-                break;
-            }
-            t--;
-        }
-    }
-    return std::move(info);
 }

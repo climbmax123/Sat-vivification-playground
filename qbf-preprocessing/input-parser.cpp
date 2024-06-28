@@ -28,7 +28,7 @@ QBF parse_DIMACS_main(std::istream &in) {
             int i = 1;
             while (words[i] != "0") {
                 qbf.quantifierOrder.push_back(abs(std::stoi(words[i])));
-                qbf.quantifierType[abs(std::stoi(words[i]))] = QuantifierType::FORALL;
+                qbf.quantifierTypeIsExists[abs(std::stoi(words[i]))] = false;
                 i++;
             }
             continue;
@@ -37,7 +37,7 @@ QBF parse_DIMACS_main(std::istream &in) {
             int i = 1;
             while (words[i] != "0") {
                 qbf.quantifierOrder.push_back(abs(std::stoi(words[i])));
-                qbf.quantifierType[abs(std::stoi(words[i]))] = QuantifierType::EXISTS;
+                qbf.quantifierTypeIsExists[abs(std::stoi(words[i]))] = true;
                 i++;
             }
             continue;
@@ -93,7 +93,7 @@ void writeQDIMACS(QBF& qbf, const std::string& filename) {
 
     // Write quantifiers
     for (int qt : qbf.quantifierOrder) {
-        if (qbf.quantifierType[qt] == EXISTS) {
+        if (qbf.quantifierTypeIsExists[qt]) {
             if (prev.empty()){
                 outfile << "e";
             }
@@ -103,9 +103,9 @@ void writeQDIMACS(QBF& qbf, const std::string& filename) {
             outfile << " " << qt;
             prev = "e";
 
-        } else if (qbf.quantifierType[qt] == FORALL) {
+        } else if (!qbf.quantifierTypeIsExists[qt]) {
             if (prev.empty()){
-                outfile << "a" << qt;
+                outfile << "a";
             }
             if(prev == "e"){
                 outfile << " 0"<< std::endl << "a";
@@ -130,9 +130,9 @@ void writeQDIMACS(QBF& qbf, const std::string& filename) {
 
 void printQBF(QBF &qbf) {
     for (const auto &qt: qbf.quantifierOrder) {
-        if (qbf.quantifierType[qt] == EXISTS) {
+        if (qbf.quantifierTypeIsExists[qt]) {
             std::cout << "E ";
-        } else if (qbf.quantifierType[qt] == FORALL) {
+        } else if (!qbf.quantifierTypeIsExists[qt]) {
             std::cout << "A ";
         }
         std::cout << qt << " ";
