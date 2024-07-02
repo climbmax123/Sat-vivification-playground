@@ -215,7 +215,7 @@ int main() {
                 size = tester.size();
                 for (int i = 0; i < tester.size(); i++) {
                     cnf = tester.deltaDebug();
-                    combined::combined_methode(cnf, 10000);
+                        combined::combined_methode(cnf, 10000);
                     tester.applyReduce(!tester.testCNF(cnf));
                 }
 

@@ -142,7 +142,9 @@ int main(int argc, char *argv[]) {
             break;
         case COMBIEND:
             std::cout << "Start Combined elimination" << std::endl;
-            combined::combined_methode(cnf);
+            watched_literals::unit_propagation(cnf, timeLimitInSeconds);
+            mapping = combined::creat_mapping(cnf);
+            combined::pureLiteralElimination(cnf, mapping);
             break;
         case SORTEDVIVIFY:
             std::cout << "Start Sorted Vivify with Pure elimination" << std::endl;

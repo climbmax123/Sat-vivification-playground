@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
         QBF qbf = parseQDIMACSFromFile(argv[1]);
 
         printQBF(qbf);
-        pure::pure_propagation_with_universals(qbf);
+        vivify::watched_literals_vivify(qbf);
         printQBF(qbf);
         writeQDIMACS(qbf, argv[2]);
 

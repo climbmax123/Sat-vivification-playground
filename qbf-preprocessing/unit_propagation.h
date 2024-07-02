@@ -8,7 +8,10 @@
 #define VIVIFCATION_UNIT_PROPAGATION_H
 
 namespace unit {
-    void watched_literals_unit_propagation_with_up(QBF &qbf);
+
+    void watched_literals_unit_propagation_without_ur(QBF &qbf);
+
+    void watched_literals_unit_propagation_with_ur(QBF &qbf);
 }
 //void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf)
 
