@@ -9,9 +9,9 @@
 
 namespace unit {
 
-    void watched_literals_unit_propagation_without_ur(QBF &qbf);
+    void watched_literals_unit_propagation_without_ur(QBF &qbf, int timeLimitInSeconds);
 
-    void watched_literals_unit_propagation_with_ur(QBF &qbf);
+    void watched_literals_unit_propagation_with_ur(QBF &qbf, int timeLimitInSeconds);
 }
 //void watched_literals_unit_propagation_with_universal_reduction(QBF &qbf)
 

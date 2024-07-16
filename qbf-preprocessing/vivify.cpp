@@ -248,8 +248,9 @@ namespace vivify {
     }
 
 
-    void watched_literals_vivify(QBF &qbf) {
-        unit::watched_literals_unit_propagation_with_ur(qbf);
+    void watched_literals_vivify(QBF &qbf, int timeLimitInSeconds) {
+        auto startTime = std::chrono::steady_clock::now();
+        unit::watched_literals_unit_propagation_with_ur(qbf, timeLimitInSeconds);
         // create check for change
         bool change = true;
 
@@ -263,6 +264,17 @@ namespace vivify {
             auto runtimeInfo = create_runtime_info(qbf);
 
             for (int i = 0; i < qbf.formula.size(); i++) {
+                if (timeLimitInSeconds != -1) {
+                    auto currentTime = std::chrono::steady_clock::now();
+                    auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                            currentTime - startTime).count();
+                    if (elapsedSeconds >= timeLimitInSeconds) {
+                        std::cout << "Timeout reached ending vivify" << std::endl;
+                        return;
+                    }
+                }
+
+
                 // we work with a copy of the runtimeInfo. And adapt this after each step
                 runtime_info qbf_tracking = runtimeInfo;
 

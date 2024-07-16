@@ -9,9 +9,9 @@
 
 namespace pure {
 
-    void pure_propagation_with_universals(QBF& qbf);
+    void pure_propagation_with_universals(QBF& qbf, int timeLimitInSeconds);
 
-    void pure_propagation_without_universals(QBF& qbf);
+    void pure_propagation_without_universals(QBF& qbf, int timeLimitInSeconds);
 
 } // pure
 

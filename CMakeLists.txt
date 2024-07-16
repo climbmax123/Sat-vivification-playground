@@ -63,6 +63,8 @@ add_executable(preprocess qbf-preprocessing/main.cpp
         qbf-preprocessing/unit_propagation.h
         qbf-preprocessing/pure_propagation.cpp
         qbf-preprocessing/pure_propagation.h
+        qbf-preprocessing/sat_vivify.cpp
+        qbf-preprocessing/sat_vivify.h
 )
 
 add_executable(sat-preprocessor sat-preprocessor/main.cpp sat-preprocessor/combinedpreprocessing.cpp sat-preprocessor/combinedpreprocessing.h sat-preprocessor/sortedwatchedliteralpreprocessing.cpp

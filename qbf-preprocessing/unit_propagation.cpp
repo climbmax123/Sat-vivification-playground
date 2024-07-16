@@ -9,7 +9,8 @@
 namespace unit {
 
 
-    void watched_literals_unit_propagation_without_ur(QBF &qbf) {
+    void watched_literals_unit_propagation_without_ur(QBF &qbf, int timeLimitInSeconds) {
+        auto startTime = std::chrono::steady_clock::now();
         std::unordered_map<int, std::vector<std::pair<int, int>>> watchers;
         std::vector<int> unit_clauses;
 
@@ -41,6 +42,15 @@ namespace unit {
         int count = 0;
 
         while (count < unit_clauses.size()) {
+            if (timeLimitInSeconds != -1) {
+                auto currentTime = std::chrono::steady_clock::now();
+                auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                        currentTime - startTime).count();
+                if (elapsedSeconds >= timeLimitInSeconds) {
+                    std::cout << "Timeout reached ending vivify" << std::endl;
+                    return;
+                }
+            }
             propagated_literals.insert(unit_clauses[count]);
 
             if (watchers.contains(unit_clauses[count])) {
@@ -265,8 +275,8 @@ namespace unit {
     }
 
 
-    void watched_literals_unit_propagation_with_ur(QBF &qbf) {
-
+    void watched_literals_unit_propagation_with_ur(QBF &qbf, int timeLimitInSeconds) {
+        auto startTime = std::chrono::steady_clock::now();
         std::unordered_map<int, std::vector<std::pair<int, int>>> watchers; // (clause, lit)
 
         std::vector<int> unit_clauses;
@@ -280,6 +290,15 @@ namespace unit {
 
         int count = 0;
         while (count < unit_clauses.size()) {
+            if (timeLimitInSeconds != -1) {
+                auto currentTime = std::chrono::steady_clock::now();
+                auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                        currentTime - startTime).count();
+                if (elapsedSeconds >= timeLimitInSeconds) {
+                    std::cout << "Timeout reached ending vivify" << std::endl;
+                    break;
+                }
+            }
             propagated_literals.insert(unit_clauses[count]);
             // Step2: We remove alle literals who are set true (We only propagate existential so issue with universals)
             if (watchers.contains(unit_clauses[count])) {

@@ -15,7 +15,7 @@ q=0
 while [ $q -eq 0 ]
 do
     # Generate input.qdimacs file
-    python3 qbfuzz.py -v 10 -c 10 -o -r 0.5 -s 7 -o input.qdimacs
+    python3 qbfuzz.py -v 100 -c 100 -o -r 0.5 -s 7 -o input.qdimacs
 
     # Transform it to output.qcir
     ./cmake-build-release-gcc-compiler/preprocess input.qdimacs output.qdimacs > /dev/null 2>&1

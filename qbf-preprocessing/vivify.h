@@ -13,6 +13,6 @@
 
 namespace vivify{
 
-    void watched_literals_vivify(QBF &qbf);
+    void watched_literals_vivify(QBF &qbf, int timeLimitInSeconds);
 };
 #endif //VIVIFCATION_VIVIFY_H

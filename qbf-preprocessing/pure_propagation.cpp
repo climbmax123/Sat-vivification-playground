@@ -23,7 +23,9 @@ namespace pure {
         return std::move(map);
     }
 
-    void pure_propagation_with_universals(QBF &qbf) {
+    void pure_propagation_with_universals(QBF &qbf, int timeLimitInSeconds) {
+        auto startTime = std::chrono::steady_clock::now();
+
         auto mapping = creat_mapping(qbf);
 
         std::vector<bool> sat_clauses = std::vector<bool>(qbf.formula.size());
@@ -59,6 +61,16 @@ namespace pure {
                 }
             }
             pures = new_pures;
+            if (timeLimitInSeconds != -1) {
+                auto currentTime = std::chrono::steady_clock::now();
+                auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                        currentTime - startTime).count();
+                if (elapsedSeconds >= timeLimitInSeconds) {
+                    std::cout << "Timeout reached ending vivify" << std::endl;
+                    break;
+                }
+            }
+
         }
 
         if(std::find(sat_clauses.begin(), sat_clauses.end(), false) == sat_clauses.end()){
@@ -94,7 +106,9 @@ namespace pure {
         qbf.quantifierOrder = std::move(qu_ord);
     }
 
-    void pure_propagation_without_universals(QBF &qbf) {
+    void pure_propagation_without_universals(QBF &qbf, int timeLimitInSeconds) {
+        auto startTime = std::chrono::steady_clock::now();
+
         auto mapping = creat_mapping(qbf);
 
         std::vector<bool> sat_clauses = std::vector<bool>(qbf.formula.size());
@@ -137,6 +151,15 @@ namespace pure {
                 }
             }
             pures = new_pures;
+            if (timeLimitInSeconds != -1) {
+                auto currentTime = std::chrono::steady_clock::now();
+                auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(
+                        currentTime - startTime).count();
+                if (elapsedSeconds >= timeLimitInSeconds) {
+                    std::cout << "Timeout reached ending vivify" << std::endl;
+                    break;
+                }
+            }
         }
 
         if(std::find(sat_clauses.begin(), sat_clauses.end(), false) == sat_clauses.end()){

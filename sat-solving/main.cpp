@@ -142,14 +142,14 @@ int main() {
 //#pragma omp parallel for num_threads(16)
 //for (auto const &path: paths) {
 
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 1; i++) {
         CDNF_formula cnf;
         int rank;
         CNFTester tester(10, 10);
 //#pragma omp critical
         {
-
-            cnf = tester.generateCNF();//tester.loadCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/CNF_662.cnf");//tester.loadCNF(path);
+            cnf = {{-1, -2},{-3,2},{3, 2},{1, -2}};
+            //cnf = tester.generateCNF();//tester.loadCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/CNF_662.cnf");//tester.loadCNF(path);
             //tester.saveCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/");
             rank = i++;
 
@@ -157,7 +157,7 @@ int main() {
             //          << std::endl;
         }
         // normal unit prop
-        /*
+
         auto start1 = high_resolution_clock::now();
         CDNF_formula unit_prop;
         watched_literals::watched_literals_unit_propagation(cnf);
@@ -168,13 +168,16 @@ int main() {
         auto start2 = high_resolution_clock::now();
         CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
         auto end2 = high_resolution_clock::now();
-         */
-/*        // vivify
+        tester.printCNF(cnf);
+        tester.printCNF(pure_literal);
+       // vivify
         CDNF_formula vivify = cnf;
         auto start3 = high_resolution_clock::now();
         watched_literals::vivify(vivify, rank, runtime_writer);
         auto end3 = high_resolution_clock::now();
         auto duration3 = duration_cast<milliseconds>(end3 - start3).count();
+        tester.printCNF(vivify);
+
 /*
         if (!tester.testCNF(vivify)) {
             tester.printOriginalCNF();
@@ -182,12 +185,13 @@ int main() {
             std::cerr << "error not sound" << std::endl;
             exit(1);
         }
-        /*
+
         CDNF_formula vivify2 = cnf;
         auto start4 = high_resolution_clock::now();
-        //watched_literals::vivify_with_pure_lit(vivify2, rank, runtime_writer2, pure_lit_writer2);
+        watched_literals::vivify_with_pure_lit(vivify2, rank, runtime_writer2, pure_lit_writer2);
         auto end4 = high_resolution_clock::now();
         auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
+        tester.printCNF(vivify2);
         /*
         if (!tester.testCNF(vivify2)) {
             tester.printOriginalCNF();
@@ -196,14 +200,14 @@ int main() {
             exit(2);
         }
     */
-
+/*
         CDNF_formula vivify3 = cnf;
         auto start5 = high_resolution_clock::now();
         combined::combined_methode(vivify3, 1000);
         auto end5 = high_resolution_clock::now();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
 
-
+/*
         if (!tester.testCNF(vivify3)) {
             std::cerr << "error not vivify3 sound" << std::endl;
             tester.saveCNF(
@@ -229,7 +233,7 @@ int main() {
             }
             exit(3);
         }
-
+*/
         std::cout << "Vivification Times (in milliseconds):" << std::endl;
         //std::cout << "Without pure literals: " << duration3 << " ms \t size: " << vivify.size() << std::endl;
         //std::cout << "With pure literals: " << duration4 << " ms \t size: " << vivify2.size() << std::endl;
