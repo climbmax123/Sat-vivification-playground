@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <iostream>
+#include <algorithm>
 
 namespace pure {
 
@@ -13,7 +14,7 @@ namespace pure {
         std::map<int, std::pair<int, bool>> map;
         for (const auto &cl: qbf.formula) {
             for (int i: cl) {
-                if (map.contains(i)) {
+                if (map.find(i) != map.end())  {
                     map[i].first++;
                 } else {
                     map.insert({i, {1, qbf.quantifierTypeIsExists[std::abs(i)]}});
@@ -32,7 +33,7 @@ namespace pure {
 
         std::set<std::pair<int, bool>> pures = {};
         for (auto literal: mapping) {
-            if (mapping.contains(-literal.first) && mapping[literal.first].first > 0) {
+            if (mapping.find(-literal.first) != mapping.end() && mapping[literal.first].first > 0) {
                 continue;
             }
             pures.insert({literal.first, mapping[literal.first].second});
@@ -115,7 +116,7 @@ namespace pure {
 
         std::set<std::pair<int, bool>> pures = {};
         for (auto literal: mapping) {
-            if (mapping.contains(-literal.first) && mapping[literal.first].first > 0) {
+            if (mapping.find(-literal.first) != mapping.end() && mapping[literal.first].first > 0) {
                 continue;
             }
             if(mapping[literal.first].second) {

@@ -53,14 +53,14 @@ namespace unit {
             }
             propagated_literals.insert(unit_clauses[count]);
 
-            if (watchers.contains(unit_clauses[count])) {
+            if (watchers.find(unit_clauses[count]) != watchers.end()) {
                 for (const auto watcher: watchers[unit_clauses[count]]) {
                     sat_clauses[watcher.first] = true;
                 }
                 watchers.erase(unit_clauses[count]);
             }
 
-            if (watchers.contains(-unit_clauses[count])) {
+            if (watchers.find(-unit_clauses[count]) != watchers.end()) {
                 // we have to replace the watchers for that literal
                 for (const auto watcher: watchers[-unit_clauses[count]]) {
                     int clause = watcher.first;
@@ -73,7 +73,7 @@ namespace unit {
 
                     while (lit_pos >= 0) {
                         // if next position is already a watcher
-                        if (watchers.contains(qbf.formula[clause][lit_pos]) &&
+                        if (watchers.find(qbf.formula[clause][lit_pos]) != watchers.end() &&
                             std::find(watchers[qbf.formula[clause][lit_pos]].begin(),
                                       watchers[qbf.formula[clause][lit_pos]].end(),
                                       std::pair<int, int>{clause, lit_pos}) !=
@@ -83,13 +83,13 @@ namespace unit {
                             continue;
                         }
                         // if already the positive is propagated we can set the clause true and exit
-                        if (propagated_literals.contains(qbf.formula[clause][lit_pos])) {
+                        if (propagated_literals.find(qbf.formula[clause][lit_pos]) != propagated_literals.end()) {
                             sat_clauses[clause] = true;
                             break;
                         }
 
                         // if already the negative is propagated continue
-                        if (propagated_literals.contains(-qbf.formula[clause][lit_pos])) {
+                        if (propagated_literals.find(-qbf.formula[clause][lit_pos]) != propagated_literals.end()) {
                             lit_pos--;
                             continue;
                         }
@@ -98,7 +98,7 @@ namespace unit {
                         // new watched literal
                         found_new_watcher = true;
 
-                        if (watchers.contains(qbf.formula[clause][lit_pos])) {
+                        if (watchers.find(qbf.formula[clause][lit_pos]) != watchers.end()) {
                             watchers[qbf.formula[clause][lit_pos]].emplace_back(clause, lit_pos);
                             break;
                         }
@@ -109,12 +109,12 @@ namespace unit {
                     if (!found_new_watcher && !sat_clauses[clause]) {
                         // if we only have one watcher we are done
                         for (int other = other_watcher_pos; other < qbf.formula[clause].size(); other++) {
-                            if (propagated_literals.contains(qbf.formula[clause][other])) {
+                            if (propagated_literals.find(qbf.formula[clause][other]) != propagated_literals.end()) {
                                 sat_clauses[clause] = true;
                                 break;
                             }
 
-                            if (watchers.contains(qbf.formula[clause][other]) &&
+                            if (watchers.find(qbf.formula[clause][other]) != watchers.end() &&
                                 std::find(watchers[qbf.formula[clause][other]].begin(),
                                           watchers[qbf.formula[clause][other]].end(),
                                           std::pair<int, int>{clause, other}) !=
@@ -153,11 +153,11 @@ namespace unit {
             std::vector<int> cl;
             bool add = true;
             for (int j: qbf.formula[i]) {
-                if (propagated_literals.contains(j)) {
+                if (propagated_literals.find(j) != propagated_literals.end()) {
                     add = false;
                     break;
                 }
-                if (propagated_literals.contains(-j)) {
+                if (propagated_literals.find(-j) != propagated_literals.end()) {
                     continue;
                 }
                 cl.push_back(j);
@@ -226,11 +226,11 @@ namespace unit {
         // We find the next literal and check if on the pos it is true that should contain all literals.
         if (!qbf.quantifierTypeIsExists[abs(qbf.formula[watcher.first][watcher.second])]) {
             for (; other_watcher_pos < qbf.formula[watcher.first].size(); other_watcher_pos++) {
-                if (propagated_literals.contains(qbf.formula[watcher.first][other_watcher_pos])) {
+                if (propagated_literals.find(qbf.formula[watcher.first][other_watcher_pos]) != propagated_literals.end()) {
                     sat_clauses[watcher.first] = true;
                 }
 
-                if (watchers.contains(qbf.formula[watcher.first][other_watcher_pos]) &&
+                if (watchers.find(qbf.formula[watcher.first][other_watcher_pos]) != watchers.end() &&
                     std::find(watchers[qbf.formula[watcher.first][other_watcher_pos]].begin(),
                               watchers[qbf.formula[watcher.first][other_watcher_pos]].end(),
                               std::pair<int, int>{watcher.first, other_watcher_pos}) !=
@@ -242,10 +242,10 @@ namespace unit {
             int pos = other_watcher_pos;
             bool found = false;
             for (; pos < qbf.formula[watcher.first].size(); pos++) {
-                if (propagated_literals.contains(qbf.formula[watcher.first][pos])) {
+                if (propagated_literals.find(qbf.formula[watcher.first][pos]) != propagated_literals.end()) {
                     sat_clauses[watcher.first] = true;
                 }
-                if (watchers.contains(qbf.formula[watcher.first][pos]) &&
+                if (watchers.find(qbf.formula[watcher.first][pos]) != watchers.end() &&
                     std::find(watchers[qbf.formula[watcher.first][pos]].begin(),
                               watchers[qbf.formula[watcher.first][pos]].end(),
                               std::pair<int, int>{watcher.first, pos}) !=
@@ -258,10 +258,10 @@ namespace unit {
             if (!found) {
                 pos = other_watcher_pos - 2;
                 for (; pos >= 0; pos--) {
-                    if (propagated_literals.contains(qbf.formula[watcher.first][pos])) {
+                    if (propagated_literals.find(qbf.formula[watcher.first][pos]) != propagated_literals.end()) {
                         sat_clauses[watcher.first] = true;
                     }
-                    if (watchers.contains(qbf.formula[watcher.first][pos]) &&
+                    if (watchers.find(qbf.formula[watcher.first][pos]) != watchers.end()&&
                         std::find(watchers[qbf.formula[watcher.first][pos]].begin(),
                                   watchers[qbf.formula[watcher.first][pos]].end(),
                                   std::pair<int, int>{watcher.first, pos}) !=
@@ -301,7 +301,7 @@ namespace unit {
             }
             propagated_literals.insert(unit_clauses[count]);
             // Step2: We remove alle literals who are set true (We only propagate existential so issue with universals)
-            if (watchers.contains(unit_clauses[count])) {
+            if (watchers.find(unit_clauses[count]) != watchers.end())  {
                 for (int w = 0; w < watchers[unit_clauses[count]].size(); w++) {
                     sat_clauses[watchers[unit_clauses[count]][w].first] = true;
                 }
@@ -309,7 +309,7 @@ namespace unit {
             }
 
             // Step3: The negative case: we have to update all watchers that watch -l and reset them
-            if (watchers.contains(-unit_clauses[count])) {
+            if (watchers.find(-unit_clauses[count]) != watchers.end()) {
 
                 for (int w = 0; w < watchers[-unit_clauses[count]].size(); w++) {
 
@@ -344,13 +344,13 @@ namespace unit {
 
                         while (other_watcher_pos > 0) {
                             other_watcher_pos--;
-                            if (propagated_literals.contains(
-                                    qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos])) {
+                            if (propagated_literals.find(
+                                    qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos]) != propagated_literals.end()) {
                                 sat_clauses[watchers[-unit_clauses[count]][w].first] = true;
                                 break;
                             }
-                            if (propagated_literals.contains(
-                                    -qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos])) {
+                            if (propagated_literals.find(
+                                    -qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos]) != propagated_literals.end()) {
                                 continue;
                             }
                             if (!qbf.quantifierTypeIsExists[std::abs(
@@ -367,13 +367,13 @@ namespace unit {
 
                     for (int watcher_pos = std::min(watchers[-unit_clauses[count]][w].second - 1, other_watcher_pos-1);
                          watcher_pos >= 0; watcher_pos--) {
-                        if (propagated_literals.contains(
-                                qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos])) {
+                        if (propagated_literals.find(
+                                qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos]) != propagated_literals.end()) {
                             sat_clauses[watchers[-unit_clauses[count]][w].first] = true;
                             break;
                         }
-                        if (propagated_literals.contains(
-                                -qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos])) {
+                        if (propagated_literals.find(
+                                -qbf.formula[watchers[-unit_clauses[count]][w].first][other_watcher_pos]) != propagated_literals.end()) {
                             sat_clauses[watchers[-unit_clauses[count]][w].first] = true;
                             continue;
                         }
@@ -414,11 +414,11 @@ namespace unit {
                 if (reduce && !qbf.quantifierTypeIsExists[abs(qbf.formula[i][j])]) {
                     continue;
                 }
-                if (propagated_literals.contains(qbf.formula[i][j])) {
+                if (propagated_literals.find(qbf.formula[i][j]) != propagated_literals.end()) {
                     add = false;
                     break;
                 }
-                if (propagated_literals.contains(-qbf.formula[i][j])) {
+                if (propagated_literals.find(-qbf.formula[i][j]) != propagated_literals.end()) {
                     continue;
                 }
                 reduce = false;

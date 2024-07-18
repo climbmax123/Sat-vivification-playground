@@ -40,7 +40,7 @@ namespace satvivify {
 
             propagated_literals.insert(unit_clauses[count]);
             // we set all clauses to true that are watched by unit
-            if (watchers.contains(unit_clauses[count])) {
+            if (watchers.find(unit_clauses[count]) != watchers.end()) {
                 for (const auto watcher: watchers[unit_clauses[count]]) {
                     sat_clauses[watcher.first] = true;
                 }
@@ -49,7 +49,7 @@ namespace satvivify {
                 watchers.erase(unit_clauses[count]);
             }
 
-            if (watchers.contains(-unit_clauses[count])) {
+            if (watchers.find(-unit_clauses[count]) != watchers.end()) {
                 // we have to replace the watchers for that literal
                 for (const auto watcher: watchers[-unit_clauses[count]]) {
                     int clause = watcher.first;
@@ -62,7 +62,7 @@ namespace satvivify {
 
                     while (lit_pos < cnf[clause].size()) {
                         // if next position is already a watcher
-                        if (watchers.contains(cnf[clause][lit_pos]) &&
+                        if (watchers.find(cnf[clause][lit_pos]) != watchers.end() &&
                             std::find(watchers[cnf[clause][lit_pos]].begin(),
                                       watchers[cnf[clause][lit_pos]].end(),
                                       std::pair<int, int>{clause, lit_pos}) !=
@@ -72,13 +72,13 @@ namespace satvivify {
                             continue;
                         }
                         // if already the positive is propagated we can set the clause true and exit
-                        if (propagated_literals.contains(cnf[clause][lit_pos])) {
+                        if (propagated_literals.find(cnf[clause][lit_pos]) != propagated_literals.end()) {
                             sat_clauses[clause] = true;
                             break;
                         }
 
                         // if already the negative is propagated continue
-                        if (propagated_literals.contains(-cnf[clause][lit_pos])) {
+                        if (propagated_literals.find(-cnf[clause][lit_pos]) != propagated_literals.end()) {
                             lit_pos++;
                             continue;
                         }
@@ -87,7 +87,7 @@ namespace satvivify {
                         // new watched literal
                         found_new_watcher = true;
 
-                        if (watchers.contains(cnf[clause][lit_pos])) {
+                        if (watchers.find(cnf[clause][lit_pos]) != watchers.end()) {
                             watchers[cnf[clause][lit_pos]].emplace_back(clause, lit_pos);
                             break;
                         }
@@ -98,12 +98,12 @@ namespace satvivify {
                     if (!found_new_watcher && !sat_clauses[clause]) {
                         // if we only have one watcher we are done
                         for (int other = other_watcher_pos; other >= 0; other--) {
-                            if (propagated_literals.contains(cnf[clause][other])) {
+                            if (propagated_literals.find(cnf[clause][other]) != propagated_literals.end()) {
                                 sat_clauses[clause] = true;
                                 break;
                             }
 
-                            if (watchers.contains(cnf[clause][other]) &&
+                            if (watchers.find(cnf[clause][other]) != watchers.end()&&
                                 std::find(watchers[cnf[clause][other]].begin(),
                                           watchers[cnf[clause][other]].end(),
                                           std::pair<int, int>{clause, other}) !=
@@ -132,11 +132,11 @@ namespace satvivify {
             std::vector<int> cl;
             bool add = true;
             for (int j: cnf[i]) {
-                if (propagated_literals.contains(j)) {
+                if (propagated_literals.find(j) != propagated_literals.end()) {
                     add = false;
                     break;
                 }
-                if (propagated_literals.contains(-j)) {
+                if (propagated_literals.find(-j) != propagated_literals.end()) {
                     continue;
                 }
                 cl.push_back(j);
@@ -188,14 +188,14 @@ namespace satvivify {
         while (count < unit_clauses.size()) {
             runtime_info.propagated_literals.push_back(unit_clauses[count]);
 
-            if (runtime_info.watchers.contains(unit_clauses[count])) {
+            if (runtime_info.watchers.find(unit_clauses[count]) != runtime_info.watchers.end()) {
                 for (const auto watcher: runtime_info.watchers[unit_clauses[count]]) {
                     runtime_info.clauseIsSat[watcher.first] = true;
                 }
                 runtime_info.watchers.erase(unit_clauses[count]);
             }
 
-            if (runtime_info.watchers.contains(-unit_clauses[count])) {
+            if (runtime_info.watchers.find(-unit_clauses[count]) != runtime_info.watchers.end()) {
                 // we have to replace the watchers for that literal
                 for (const auto watcher: runtime_info.watchers[-unit_clauses[count]]) {
                     int clause = watcher.first;
@@ -208,7 +208,7 @@ namespace satvivify {
 
                     while (lit_pos < cnf[clause].size()) {
                         // if next position is already a watcher
-                        if (runtime_info.watchers.contains(cnf[clause][lit_pos]) &&
+                        if (runtime_info.watchers.find(cnf[clause][lit_pos]) != runtime_info.watchers.end() &&
                             std::find(runtime_info.watchers[cnf[clause][lit_pos]].begin(),
                                       runtime_info.watchers[cnf[clause][lit_pos]].end(),
                                       std::pair<int, int>{clause, lit_pos}) !=
@@ -235,7 +235,7 @@ namespace satvivify {
                         // new watched literal
                         found_new_watcher = true;
 
-                        if (runtime_info.watchers.contains(cnf[clause][lit_pos])) {
+                        if (runtime_info.watchers.find(cnf[clause][lit_pos]) != runtime_info.watchers.end()){
                             runtime_info.watchers[cnf[clause][lit_pos]].emplace_back(clause, lit_pos);
                             break;
                         }
@@ -254,7 +254,7 @@ namespace satvivify {
                                 break;
                             }
 
-                            if (runtime_info.watchers.contains(cnf[clause][other]) &&
+                            if (runtime_info.watchers.find(cnf[clause][other]) != runtime_info.watchers.end() &&
                                 std::find(runtime_info.watchers[cnf[clause][other]].begin(),
                                           runtime_info.watchers[cnf[clause][other]].end(),
                                           std::pair<int, int>{clause, other}) !=
@@ -288,20 +288,20 @@ namespace satvivify {
                          std::vector<int> &cb,
                          int pos) {
         for (int i = 0; i < c.size(); i++) {
-            if (mapping.contains(c[i]) &&
+            if (mapping.find(c[i]) != mapping.end() &&
                 std::find(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i}) !=
                 mapping[c[i]].end()) {
                 auto newEnd = std::remove(mapping[c[i]].begin(), mapping[c[i]].end(), std::pair<int, int>{pos, i});
                 mapping[c[i]].erase(newEnd, mapping[c[i]].end());
             }
         }
-        if (mapping.contains(cb[cb.size() - 1])) {
+        if (mapping.find(cb[cb.size() - 1]) != mapping.end()) {
             mapping[cb[cb.size() - 1]].emplace_back(pos, cb.size() - 1);
         } else {
             mapping[cb[cb.size() - 1]] = {{pos, cb.size() - 1}};
         }
 
-        if (mapping.contains(cb[cb.size() - 2])) {
+        if (mapping.find(cb[cb.size() - 2]) != mapping.end()) {
             mapping[cb[cb.size() - 2]].emplace_back(pos, cb.size() - 2);
         } else {
             mapping[cb[cb.size() - 2]] = {{pos, cb.size() - 2}};
