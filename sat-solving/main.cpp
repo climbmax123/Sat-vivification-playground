@@ -142,14 +142,14 @@ int main() {
 //#pragma omp parallel for num_threads(16)
 //for (auto const &path: paths) {
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 1000; i++) {
         CDNF_formula cnf;
         int rank;
-        CNFTester tester(10, 10);
+        CNFTester tester(100, 100);
 //#pragma omp critical
         {
-            cnf = {{-1, -2},{-3,2},{3, 2},{1, -2}};
-            //cnf = tester.generateCNF();//tester.loadCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/CNF_662.cnf");//tester.loadCNF(path);
+            //cnf = tester.loadCNF("/Users/christofer.held/Documents/Uni/BachelorArbeit/cnf-val-2023/71bca76153c6ee65b72a517fd658a42d-iso-brn100.shuffled-as.sat05-3025.cnf");
+            cnf = tester.generateCNF();//tester.loadCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/CNF_662.cnf");//tester.loadCNF(path);
             //tester.saveCNF("/Users/christofer.held/CLionProjects/Sat-vivification-playground/testcases/");
             rank = i++;
 
@@ -163,43 +163,43 @@ int main() {
         watched_literals::watched_literals_unit_propagation(cnf);
 
 
-        auto end1 = high_resolution_clock::now();
+        //auto end1 = high_resolution_clock::now();
         // normal pure literal elimination
-        auto start2 = high_resolution_clock::now();
-        CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
-        auto end2 = high_resolution_clock::now();
-        tester.printCNF(cnf);
-        tester.printCNF(pure_literal);
+        //auto start2 = high_resolution_clock::now();
+        //CDNF_formula pure_literal = normal::pureLiteralElimination(cnf);
+        //auto end2 = high_resolution_clock::now();
+        //tester.printCNF(cnf);
+        //tester.printCNF(pure_literal);
        // vivify
-        CDNF_formula vivify = cnf;
+        /*CDNF_formula vivify = cnf;
         auto start3 = high_resolution_clock::now();
         watched_literals::vivify(vivify, rank, runtime_writer);
         auto end3 = high_resolution_clock::now();
         auto duration3 = duration_cast<milliseconds>(end3 - start3).count();
         tester.printCNF(vivify);
 
-/*
+
         if (!tester.testCNF(vivify)) {
             tester.printOriginalCNF();
             tester.printCNF(vivify);
             std::cerr << "error not sound" << std::endl;
             exit(1);
         }
-
+*/
         CDNF_formula vivify2 = cnf;
         auto start4 = high_resolution_clock::now();
-        watched_literals::vivify_with_pure_lit(vivify2, rank, runtime_writer2, pure_lit_writer2);
+        sorted::vivify_with_sorted_pure_lit(vivify2, -1);
         auto end4 = high_resolution_clock::now();
         auto duration4 = duration_cast<milliseconds>(end4 - start4).count();
-        tester.printCNF(vivify2);
-        /*
+        //tester.printCNF(vivify2);
+
         if (!tester.testCNF(vivify2)) {
             tester.printOriginalCNF();
             tester.printCNF(vivify2);
             std::cerr << "error sorted vivify not sound" << std::endl;
             exit(2);
         }
-    */
+
 /*
         CDNF_formula vivify3 = cnf;
         auto start5 = high_resolution_clock::now();
@@ -207,7 +207,7 @@ int main() {
         auto end5 = high_resolution_clock::now();
         auto duration5 = duration_cast<milliseconds>(end5 - start5).count();
 
-/*
+
         if (!tester.testCNF(vivify3)) {
             std::cerr << "error not vivify3 sound" << std::endl;
             tester.saveCNF(
@@ -236,8 +236,8 @@ int main() {
 */
         std::cout << "Vivification Times (in milliseconds):" << std::endl;
         //std::cout << "Without pure literals: " << duration3 << " ms \t size: " << vivify.size() << std::endl;
-        //std::cout << "With pure literals: " << duration4 << " ms \t size: " << vivify2.size() << std::endl;
-        std::cout << "With sorted pure literals: " << duration5 << " ms \t size: " << vivify3.size() << std::endl;
+        std::cout << "With pure literals: " << duration4 << " ms \t size: " << vivify2.size() << std::endl;
+       // std::cout << "With sorted pure literals: " << duration5 << " ms \t size: " << vivify3.size() << std::endl;
 
 
         /*

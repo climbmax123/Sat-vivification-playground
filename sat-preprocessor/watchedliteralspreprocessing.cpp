@@ -398,23 +398,24 @@ namespace watched_literals {
                     }
 
                     if (is_unsat) {
-                        update_watchers(watchers, c, cb, i);
                         cnf[i] = cb;
                         if (c != cb) {
                             shortened = true;
                             change++;
                         }
                     } else {
+                        bool cont = false;
                         for (size_t lit = num_propagations + 1; lit < cnf_tracking.propagated_literals.size(); lit++) {
                             int unit = cnf_tracking.propagated_literals[lit];
 
                             if (std::find(c.begin(), c.end(), unit) != c.end()) {
                                 if (cb.size() + 1 < c.size()) {
                                     cb.push_back(unit);
-                                    update_watchers(watchers, c, cb, i);
+                                    //update_watchers(watchers, c, cb, i);
                                     cnf[i] = cb;
                                     shortened = true;
                                 }
+                                cont = true;
                                 break;
                             }
 
@@ -425,17 +426,24 @@ namespace watched_literals {
                                         new_clause.push_back(lc);
                                     }
                                 }
-                                update_watchers(watchers, c, new_clause, i);
-                                cnf[i] = new_clause;
+                                //update_watchers(watchers, c, cb, i);
+                                cnf[i] = std::move(new_clause);
                                 shortened = true;
                                 break;
+
                             }
+
+                        }
+                        if(cont){
+                            break;
                         }
                     }
                 }
                 if (!shortened) {
                     cnf_tracking.clauseIsSat[i] = false;
                 } else {
+                    watchers = create_watched_literal_mapping(cnf);
+                    cnf_tracking.watchers = watchers;
                     change++;
                     cnf_tracking.clauseIsSat[i] = false;
 

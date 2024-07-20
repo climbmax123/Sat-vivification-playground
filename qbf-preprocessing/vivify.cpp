@@ -251,7 +251,7 @@ namespace vivify {
     void watched_literals_vivify(QBF &qbf, int timeLimitInSeconds) {
         auto startTime = std::chrono::steady_clock::now();
         unit::watched_literals_unit_propagation_with_ur(qbf, timeLimitInSeconds);
-        // create check for change
+        // create check for changels
         bool change = true;
 
         // If qbf is sat or unsat after unit propagation

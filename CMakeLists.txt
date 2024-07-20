@@ -7,16 +7,6 @@ set(CMAKE_CXX_STANDARD 23)
 find_package(OpenMP REQUIRED)
 find_package(TBB REQUIRED)
 
-# Add -march=native flag and -mavx2 for GCC and Clang
-#if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-#        set(NATIVE_FLAGS "-march=native -mavx2")
-#elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-#        # MSVC does not support -march=native or -mavx2 directly
-#        set(NATIVE_FLAGS "/arch:AVX2 -march=native")
-#else()
-#        message(FATAL_ERROR "Unsupported compiler")
-#endif()
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 ${NATIVE_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3")

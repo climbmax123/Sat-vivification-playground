@@ -19,7 +19,7 @@ namespace sorted {
 
 
 
-    void vivify_with_sorted_pure_lit(CDNF_formula &cnf, int timeLimitInSeconds = -1);
+    void vivify_with_sorted_pure_lit(CDNF_formula &cnf, int timeLimitInSeconds = -1, std::string path, std::string filename);
 
 
 } // sorted
