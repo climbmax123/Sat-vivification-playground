@@ -13,10 +13,10 @@
 int main(int argc, char *argv[]) {
     int opt;
     enum {
-        PURE, UNIT, VIVIFY, UNIT_WITH_UR
+        PURE, UNIT, VIVIFY, UNIT_WITH_UR, COMBI
     } mode;
 
-    const char *options = "u:v:p";
+    const char *options = "u:v:p:c";
     while ((opt = getopt(argc, argv, options)) != -1) {
         switch (opt) {
             case 'u':
@@ -28,6 +28,9 @@ int main(int argc, char *argv[]) {
             case 'p':
                 mode = PURE;
                 break;
+            case 'c':
+                mode = COMBI;
+                break;
             default:
                 std::cerr << "Invalid option provided." << std::endl;
                 return 1;
@@ -35,7 +38,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " [-u|-v|-p] <inputfile> <outputfile>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " [-u|-v|-p|-c] <inputfile> <outputfile>" << std::endl;
         return 1;
     }
 
@@ -54,6 +57,13 @@ int main(int argc, char *argv[]) {
             std::cout << "Start Pure elimination" << std::endl;
             pure::pure_propagation_with_universals(qbf, timeLimitInSeconds);
             break;
+        case COMBI:
+            std::cout << "Start Combi appoach" << std::endl;
+            unit::watched_literals_unit_propagation_with_ur(qbf, 2*60);
+            satvivify::watched_literals_vivify(qbf, 25*60);
+            unit::watched_literals_unit_propagation_with_ur(qbf, 2*60);
+            pure::pure_propagation_with_universals(qbf, 1*60);
+            break; // (2+25+2+1)*60 = 1800
         default:
             std::cerr << "wrong input" << std::endl;
             break;
